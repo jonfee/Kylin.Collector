@@ -1,0 +1,5 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<root>
+  <collector type="1" name="天猫超市" url="https://chaoshi.tmall.com"></collector>
+  <collector type="2" name="一号店" url=""></collector>
+</root>

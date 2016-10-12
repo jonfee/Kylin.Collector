@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<root>
+  <category categoryIdQueryName="cat">
+    <first>
+      <url>https://www.tmall.com/wow/chaoshi/act/category?wh_logica=HN&amp;_ksTS=1476167157496_164&amp;wh_callback=__chaoshi_category</url>
+      <pattern dataGroup="data">^[^_]*__chaoshi_category\((?&lt;data&gt;.+)\)[^\)]*$</pattern>
+    </first>
+    <child>
+      <url>https://www.tmall.com/wow/chaoshi/act/catpopup?wh_id=#wh_id#&amp;wh_logica=HN&amp;_ksTS=1476167229120_926&amp;wh_callback=__chaoshi_category_popup_#wh_id#</url>
+      <pattern dataGroup="data">^[^_]*__chaoshi_category_popup_[a-z]+\((?&lt;data&gt;.+)\)[^\)]*</pattern>
+    </child>
+  </category>
+</root>
