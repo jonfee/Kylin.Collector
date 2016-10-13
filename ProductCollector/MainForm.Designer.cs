@@ -37,11 +37,16 @@
             this.label1 = new System.Windows.Forms.Label();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.panelCategory = new System.Windows.Forms.Panel();
+            this.rtxtMsg = new System.Windows.Forms.RichTextBox();
+            this.progressBar1 = new System.Windows.Forms.ProgressBar();
+            this.lbStatistics = new System.Windows.Forms.Label();
             this.groupBox1.SuspendLayout();
+            this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.lbStatistics);
             this.groupBox1.Controls.Add(this.panelCategory);
             this.groupBox1.Controls.Add(this.btnStop);
             this.groupBox1.Controls.Add(this.btnStart);
@@ -64,6 +69,7 @@
             this.btnStop.TabIndex = 14;
             this.btnStop.Text = "停止";
             this.btnStop.UseVisualStyleBackColor = true;
+            this.btnStop.Click += new System.EventHandler(this.btnStop_Click);
             // 
             // btnStart
             // 
@@ -89,10 +95,10 @@
             this.lkUpdateCategory.AutoSize = true;
             this.lkUpdateCategory.Location = new System.Drawing.Point(372, 34);
             this.lkUpdateCategory.Name = "lkUpdateCategory";
-            this.lkUpdateCategory.Size = new System.Drawing.Size(77, 12);
+            this.lkUpdateCategory.Size = new System.Drawing.Size(101, 12);
             this.lkUpdateCategory.TabIndex = 9;
             this.lkUpdateCategory.TabStop = true;
-            this.lkUpdateCategory.Text = "更新商品分类";
+            this.lkUpdateCategory.Text = "下载最新商品分类";
             this.lkUpdateCategory.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.lkUpdateCategory_LinkClicked);
             // 
             // cbSourceSite
@@ -115,9 +121,10 @@
             // 
             // groupBox2
             // 
-            this.groupBox2.Location = new System.Drawing.Point(13, 370);
+            this.groupBox2.Controls.Add(this.rtxtMsg);
+            this.groupBox2.Location = new System.Drawing.Point(13, 397);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(875, 268);
+            this.groupBox2.Size = new System.Drawing.Size(875, 241);
             this.groupBox2.TabIndex = 1;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "采集结果";
@@ -130,17 +137,42 @@
             this.panelCategory.Size = new System.Drawing.Size(725, 203);
             this.panelCategory.TabIndex = 15;
             // 
+            // rtxtMsg
+            // 
+            this.rtxtMsg.Location = new System.Drawing.Point(7, 21);
+            this.rtxtMsg.Name = "rtxtMsg";
+            this.rtxtMsg.Size = new System.Drawing.Size(862, 241);
+            this.rtxtMsg.TabIndex = 0;
+            this.rtxtMsg.Text = "";
+            // 
+            // progressBar1
+            // 
+            this.progressBar1.Location = new System.Drawing.Point(13, 366);
+            this.progressBar1.Name = "progressBar1";
+            this.progressBar1.Size = new System.Drawing.Size(875, 13);
+            this.progressBar1.TabIndex = 2;
+            // 
+            // lbStatistics
+            // 
+            this.lbStatistics.AutoSize = true;
+            this.lbStatistics.Location = new System.Drawing.Point(375, 300);
+            this.lbStatistics.Name = "lbStatistics";
+            this.lbStatistics.Size = new System.Drawing.Size(0, 12);
+            this.lbStatistics.TabIndex = 16;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(900, 650);
+            this.Controls.Add(this.progressBar1);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
             this.Name = "MainForm";
             this.Text = "产品采集器";
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
+            this.groupBox2.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -156,6 +188,9 @@
         private System.Windows.Forms.Button btnStart;
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.Panel panelCategory;
+        private System.Windows.Forms.RichTextBox rtxtMsg;
+        private System.Windows.Forms.ProgressBar progressBar1;
+        private System.Windows.Forms.Label lbStatistics;
     }
 }
 

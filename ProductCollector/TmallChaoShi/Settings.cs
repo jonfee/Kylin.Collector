@@ -11,7 +11,7 @@ namespace ProductCollector.TmallChaoShi
         /// <summary>
         /// 分类数据xml路径
         /// </summary>
-        public const string CategoriesXmlPath = @"data\tmallchaoshi\categories.xml";
+        public const string CategoriesXmlPath = @"history\tmallchaoshi\categories.xml";
 
         /// <summary>
         /// 采集器配置信息xml路径

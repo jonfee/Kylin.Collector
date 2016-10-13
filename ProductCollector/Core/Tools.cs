@@ -17,5 +17,20 @@ namespace ProductCollector.Core
         {
             return (long)IDCreater.NewId(1, 1);
         }
+
+        #region 不动点求子函数
+        public static Func<T, TResult> Fix<T, TResult>(Func<Func<T, TResult>, Func<T, TResult>> g)
+        {
+            return (x) => g(Fix(g))(x);
+        }
+        public static Func<T1, T2, TResult> Fix<T1, T2, TResult>(Func<Func<T1, T2, TResult>, Func<T1, T2, TResult>> g)
+        {
+            return (x, y) => g(Fix(g))(x, y);
+        }
+        public static Func<T1, T2, T3, TResult> Fix<T1, T2, T3, TResult>(Func<Func<T1, T2, T3, TResult>, Func<T1, T2, T3, TResult>> g)
+        {
+            return (x, y, z) => g(Fix(g))(x, y, z);
+        }
+        #endregion
     }
 }

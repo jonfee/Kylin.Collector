@@ -27,9 +27,9 @@ namespace ProductCollector.TmallChaoShi.Result
 
                 long cateId = 0;
 
-                if (queryDic != null && queryDic.ContainsKey(TmallChaoShiConfig.Instance.CategoryIdQueryName))
+                if (queryDic != null && queryDic.ContainsKey(TmallChaoShiConfig.Instance.CategoryOption.CategoryIdQueryName))
                 {
-                    long.TryParse(queryDic[TmallChaoShiConfig.Instance.CategoryIdQueryName], out cateId);
+                    long.TryParse(queryDic[TmallChaoShiConfig.Instance.CategoryOption.CategoryIdQueryName], out cateId);
                 }
 
                 return cateId;

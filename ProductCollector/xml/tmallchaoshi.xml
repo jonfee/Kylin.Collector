@@ -9,5 +9,16 @@
       <url>https://www.tmall.com/wow/chaoshi/act/catpopup?wh_id=#wh_id#&amp;wh_logica=HN&amp;_ksTS=1476167229120_926&amp;wh_callback=__chaoshi_category_popup_#wh_id#</url>
       <pattern dataGroup="data">^[^_]*__chaoshi_category_popup_[a-z]+\((?&lt;data&gt;.+)\)[^\)]*</pattern>
     </child>
+    <search charset="gbk" maxPages="5">
+      <cookie>_tb_token_=rv9a2NQthYEE; cookie2=2c85984e93f6fee1419c67290523080a; t=0159d17a3e90954e491ade1955d4e775; l=AqureUWTy18kCr9aaRugZS4lO8CVaL9C; isg=AtracS7DWSofNtWGC5m0SXdsKoBa3V7lnHO2yuRTLm04V3qRzJuu9aCvUbuu; cna=F+v8D/41DmQCAbclrhM8Rcwy; _med=dw:1920&amp;dh:1080&amp;pw:1920&amp;ph:1080&amp;ist:0; sm4=440300; cq=ccp%3D1</cookie>
+      <!--
+      * 正则表达式：(<a href="(?<href>[^"]+)" class="next-page">.*?下一页.*?<b class="icon">[^<]*</b>[^<]*</a>)|(<a href="(?<href>[^"]+)"(?:(?!title="下一页").+?)title="下一页">)
+      -->
+      <nextpattern dataGroup="href">(&lt;a href="(?&lt;href&gt;[^"]+)" class="next-page"&gt;.*?下一页.*?&lt;b class="icon"&gt;[^&lt;]*&lt;/b&gt;[^&lt;]*&lt;/a&gt;)|(&lt;a href="(?&lt;href&gt;[^"]+)"(?:(?!title="下一页").+?)title="下一页"&gt;)</nextpattern>
+      <!--
+      * 正则表达式：<(h3 class="product-title"|p class="productTitle")>[^<]*<a href="(?<href>[^"]+)"[^>]*>(?<title>(?:(?!</a>).|\n)+)</a>[^<]*</(h3|p)>
+      -->
+      <productpattern titleGroup="title" linkGroup="href">&lt;(h3 class="product-title"|p class="productTitle")&gt;[^&lt;]*&lt;a href="(?&lt;href&gt;[^"]+)"[^&gt;]*&gt;(?&lt;title&gt;(?:(?!&lt;/a&gt;).|\n)+)&lt;/a&gt;[^&lt;]*&lt;/(h3|p)&gt;</productpattern>
+    </search>
   </category>
 </root>

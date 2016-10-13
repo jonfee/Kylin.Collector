@@ -211,8 +211,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BackState\CallBackState.cs" />
     <Compile Include="CollectorConfig.cs" />
-    <Compile Include="Collector\CollectorFactory.cs" />
+    <Compile Include="TmallChaoShi\Result\SearchProductResult.cs" />
+    <Compile Include="WebClientHelper.cs" />
     <Compile Include="Core\Tools.cs" />
     <Compile Include="Data\DataContext.cs" />
     <Compile Include="Data\DataService.cs" />

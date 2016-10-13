@@ -1,4 +1,5 @@
-﻿using ProductCollector.Models;
+﻿using ProductCollector.BackState;
+using ProductCollector.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,12 @@ namespace ProductCollector
     public interface ICollectorService
     {
         /// <summary>
+        /// 检测服务是否正在动行
+        /// </summary>
+        /// <returns></returns>
+        bool IsRunning();
+
+        /// <summary>
         /// 获取本地存储的商品分类
         /// </summary>
         /// <returns></returns>
@@ -18,7 +25,14 @@ namespace ProductCollector
         /// <summary>
         /// 采集服务开始
         /// </summary>
-        void Start();
+        /// <param name="categories">需要采集的分类</param>
+        /// <param name="callback">回调</param>
+        void Start(IEnumerable<TempCategory> categories, Action<CallBackState> callback);
+
+        /// <summary>
+        /// 保存分类采集记录
+        /// </summary>
+        void SaveCategoryCollectingRecord(CollectedCategory item);
 
         /// <summary>
         /// 下载最新商品分类信息
@@ -33,6 +47,7 @@ namespace ProductCollector
         /// <summary>
         /// 采集服务停止
         /// </summary>
-        void Stop();
+        /// <param name="callback">回调</param>
+        void Stop(Action<CallBackState> callback);
     }
 }

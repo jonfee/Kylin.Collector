@@ -14,7 +14,12 @@ namespace ProductCollector.Models
         /// <summary>
         /// 分类ID（采集站的分类ID）
         /// </summary>
-        public long CatId { get; set; }
+        public long SiteCatId { get; set; }
+
+        /// <summary>
+        /// 采集库中的分类ID
+        /// </summary>
+        public long Category { get; set; }
 
         /// <summary>
         /// 分类名称（采集站的分类名称）

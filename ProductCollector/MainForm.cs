@@ -1,13 +1,11 @@
-﻿using ProductCollector.Collector;
-using ProductCollector.Data;
+﻿using ProductCollector.BackState;
+using ProductCollector.Core;
 using ProductCollector.Models;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -15,6 +13,11 @@ namespace ProductCollector
 {
     public partial class MainForm : Form
     {
+        /// <summary>
+        /// 定义锁
+        /// </summary>
+        readonly object locker = new object();
+
         /// <summary>
         /// 当前采集站
         /// </summary>
@@ -42,6 +45,8 @@ namespace ProductCollector
             bindData();
 
             NeedCollectCategories = new List<TempCategory>();
+
+            useForm = UseForm;
         }
 
         void bindData()
@@ -56,6 +61,14 @@ namespace ProductCollector
             this.cbSourceSite.ValueMember = "type";
             this.cbSourceSite.DisplayMember = "name";
             this.cbSourceSite.DataSource = sites;
+
+            //启动服务按钮不可用（初始化）
+            this.btnStart.Enabled = false;
+            //停止服务按钮不可用（初始化）
+            this.btnStop.Enabled = false;
+
+            //更新商品分类按钮不可用（初始化）
+            this.lkUpdateCategory.Visible = false;
         }
 
         /// <summary>
@@ -78,20 +91,39 @@ namespace ProductCollector
             {
                 Categories = service.GetLocationCategories();
 
-                BindCategory();
+                useForm(BindCategory);
             }
         }
 
+        /// <summary>
+        /// 采集服务开始
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnStart_Click(object sender, EventArgs e)
         {
             if (NeedCollectCategories.Any())
             {
-                MessageBox.Show(string.Join(",", NeedCollectCategories.Select(p => p.Name)));
+                service.Start(this.NeedCollectCategories, ServiceCallback);
             }
             else
             {
                 MessageBox.Show("请选择需要采集的商品分类");
             }
+
+            CheckServiceStatus();
+        }
+
+        /// <summary>
+        /// 停止采集服务
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnStop_Click(object sender, EventArgs e)
+        {
+            service.Stop(ServiceCallback);
+
+            CheckServiceStatus();
         }
 
         /// <summary>
@@ -103,66 +135,91 @@ namespace ProductCollector
         {
             Categories = service.UpdateCategories();
 
-            BindCategory();
+            useForm(BindCategory);
         }
 
+        private void CheckServiceStatus()
+        {
+            if (service != null)
+            {
+                bool running = service.IsRunning();
+
+                if (running)
+                {
+                    this.btnStart.Enabled = false;
+                    this.btnStop.Enabled = true;
+                }
+                else
+                {
+                    this.btnStart.Enabled = true;
+                    this.btnStop.Enabled = false;
+                }
+            }
+        }
+
+        #region 绑定商品分类到控件
         /// <summary>
         /// 绑定商品分类到控件
         /// </summary>
         private void BindCategory()
         {
-            this.panelCategory.Controls.Clear();
-
-            int row = 0; int itemW = 130; int itemH = 20; int deepPadW = 20;
-
-            int prevDeep = 0;
-
-            Action<TempCategory, int> addCheckBox = null;
-
-            addCheckBox = (cat, idx) =>
+            lock (locker)
             {
-                //层级深度
-                int deep = cat.Layer.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Count();
+                this.panelCategory.Controls.Clear();
 
-                CheckBox ckbox = new CheckBox();
-                ckbox.Click += new EventHandler(categoryChanged);
-                ckbox.Width = deep < 3 ? itemW * 2 : itemW;
-                ckbox.Text = cat.Name;
-                ckbox.Tag = cat.Layer;
+                int row = 0; int itemW = 130; int itemH = 20; int deepPadW = 20;
 
-                int px = 0; int py = 0;
+                int prevDeep = 0;
 
-                if (deep < 3)
+                Action<TempCategory, int> addCheckBox = null;
+
+                addCheckBox = (cat, idx) =>
                 {
-                    row++;
-                    px = (deep - 1) * deepPadW;
-                }
-                else
-                {
-                    if (prevDeep != deep || idx % 5 == 0) row++;
-                    px = deepPadW * 2 + (idx % 5) * itemW;
-                }
+                    //层级深度
+                    int deep = cat.Layer.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Count();
 
-                py = (row - 1) * itemH;
+                    CheckBox ckbox = new CheckBox();
+                    ckbox.Click += new EventHandler(categoryChanged);
+                    ckbox.Width = deep < 3 ? itemW * 2 : itemW;
+                    ckbox.Text = cat.Name;
+                    ckbox.Tag = cat.Layer;
 
-                ckbox.Location = new Point(px, py);
+                    int px = 0; int py = 0;
 
-                this.panelCategory.Controls.Add(ckbox);
-
-                prevDeep = deep;
-
-                if (cat.Child != null && cat.Child.Length > 0)
-                {
-                    for (var i = 0; i < cat.Child.Length; i++)
+                    if (deep < 3)
                     {
-                        addCheckBox(cat.Child[i], i);
+                        row++;
+                        px = (deep - 1) * deepPadW;
                     }
-                }
-            };
+                    else
+                    {
+                        if (prevDeep != deep || idx % 5 == 0) row++;
+                        px = deepPadW * 2 + (idx % 5) * itemW;
+                    }
 
-            for (var i = 0; i < Categories.Count(); i++)
-            {
-                addCheckBox(Categories.ElementAt(i), i);
+                    py = (row - 1) * itemH;
+
+                    ckbox.Location = new Point(px, py);
+
+                    this.panelCategory.Controls.Add(ckbox);
+
+                    prevDeep = deep;
+
+                    if (cat.Child != null && cat.Child.Length > 0)
+                    {
+                        for (var i = 0; i < cat.Child.Length; i++)
+                        {
+                            addCheckBox(cat.Child[i], i);
+                        }
+                    }
+                };
+
+                for (var i = 0; i < Categories.Count(); i++)
+                {
+                    addCheckBox(Categories.ElementAt(i), i);
+                }
+
+                this.lkUpdateCategory.Visible = true;
             }
         }
 
@@ -207,7 +264,7 @@ namespace ProductCollector
                 if (tempCkBox.Checked)
                 {
                     var layers = _tag.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-                    
+
                     if (layers.Length > 2)
                     {
                         //当前分类ID
@@ -221,6 +278,8 @@ namespace ProductCollector
             }
 
             NeedCollectCategories = tempCollectorCategoies;
+
+            this.btnStart.Enabled = NeedCollectCategories.Any();
         }
 
         /// <summary>
@@ -231,7 +290,7 @@ namespace ProductCollector
         private TempCategory findTempCategory(long categoryId)
         {
             //定义查找方法
-            var find = Fix<TempCategory, TempCategory>(f => (cat) =>
+            var find = Tools.Fix<TempCategory, TempCategory>(f => (cat) =>
              {
                  TempCategory temp = null;
 
@@ -262,16 +321,92 @@ namespace ProductCollector
             return result;
         }
 
+        #endregion
+
+        #region 抓取服务回调方法
+
         /// <summary>
-        /// 不动点算子函数
+        /// 抓取服务回调方法
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <typeparam name="TResult"></typeparam>
-        /// <param name="g"></param>
-        /// <returns></returns>
-        Func<T, TResult> Fix<T, TResult>(Func<Func<T, TResult>, Func<T, TResult>> g)
+        /// <param name="state">回调对象</param>
+        private void ServiceCallback(CallBackState state)
         {
-            return (x) => g(Fix(g))(x);
+            if (state is MessageState)
+            {
+                WriteMessage(state as MessageState);
+            }
+            else if (state is StatisticsState)
+            {
+                WriteStatistics(state as StatisticsState);
+            }
         }
+
+        /// <summary>
+        /// 输出统计信息
+        /// </summary>
+        /// <param name="state"></param>
+        void WriteStatistics(StatisticsState state)
+        {
+            if (state == null) return;
+
+            useForm(() =>
+            {
+                string txt = $"采集结果：{state.FinishCategories}/{state.TotalCategories}个分类，{state.FinishProducts}/{state.TotalProducts}条商品数据";
+
+                this.lbStatistics.Text = txt;
+            });
+        }
+
+        /// <summary>
+        /// 输出消息
+        /// </summary>
+        /// <param name="state"></param>
+        void WriteMessage(MessageState state)
+        {
+            if (state == null) return;
+
+            useForm(() =>
+            {
+                if (state.PadTime)
+                {
+                    state.Text += DateTime.Now.ToString(" --yyyy-MM-dd HH:mm:ss");
+                }
+                this.rtxtMsg.AppendText(state.Text);
+                this.rtxtMsg.AppendText("\n");
+                this.rtxtMsg.Focus();
+            });
+        }
+
+        #endregion
+
+        #region 支持异步线程和多线程中使用窗体控件
+
+        /// <summary>
+        /// 委托变量（使用窗体，并执行操作）
+        /// </summary>
+        private UseFormDelegate useForm;
+
+        /// <summary>
+        /// 定义委托（使用窗体，并执行操作）
+        /// </summary>
+        /// <param name="action"></param>
+        private delegate void UseFormDelegate(Action action);
+
+        /// <summary>
+        /// 使用窗体，并执行操作
+        /// </summary>
+        /// <param name="action"></param>
+        private void UseForm(Action action)
+        {
+            new Task(() =>
+            {
+                this.Invoke((EventHandler)delegate
+                {
+                    action();
+                });
+            }).Start();
+        }
+
+        #endregion
     }
 }

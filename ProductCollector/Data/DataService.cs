@@ -1,4 +1,5 @@
-﻿using ProductCollector.Data.Entity;
+﻿using ProductCollector.Core;
+using ProductCollector.Data.Entity;
 using ProductCollector.Models;
 using System;
 using System.Collections.Generic;
@@ -33,7 +34,7 @@ namespace ProductCollector.Data
 
                 List<TempCategory> list = data.Where(p => p.ParentId == 0).ToList();
 
-                var find = Fix<long, IEnumerable<TempCategory>, TempCategory[]>(f => (pid, sourceData) =>
+                var find = Tools.Fix<long, IEnumerable<TempCategory>, TempCategory[]>(f => (pid, sourceData) =>
                 {
                     //获取子类
                     var child = sourceData.Where(p => p.ParentId == pid).ToArray();
@@ -63,7 +64,7 @@ namespace ProductCollector.Data
         {
             using (var db = new DataContext())
             {
-                var update = Fix<TempCategory, int, bool>(up => (cat, deep) =>
+                var update = Tools.Fix<TempCategory, int, bool>(up => (cat, deep) =>
                 {
                     if (cat != null)
                     {
@@ -115,18 +116,6 @@ namespace ProductCollector.Data
                 db.SaveChanges();
             }
         }
-
-        /// <summary>
-        /// 不动点算子函数
-        /// </summary>
-        /// <typeparam name="T1">传入参数类型</typeparam>
-        /// <typeparam name="T2">传入参数类型</typeparam>
-        /// <typeparam name="TResult">返回结果类型</typeparam>
-        /// <param name="g"></param>
-        /// <returns></returns>
-        Func<T1, T2, TResult> Fix<T1, T2, TResult>(Func<Func<T1, T2, TResult>, Func<T1, T2, TResult>> g)
-        {
-            return (x, y) => g(Fix(g))(x, y);
-        }
+        
     }
 }
