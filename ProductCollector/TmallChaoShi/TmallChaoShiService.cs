@@ -95,13 +95,9 @@ namespace ProductCollector.TmallChaoShi
                 categories.Add(category);
             }
 
-            Writer.writeInvoke(new MessageState { Text = "商品分类下载完成，正在更新本地数据……" });
-
             //更新本地商品分类
             new DataService().UpdateCategories(categories);
-
-            Writer.writeInvoke(new MessageState { Text = "本地数据更新完成！" });
-
+            
             return categories;
         }
 
@@ -125,15 +121,21 @@ namespace ProductCollector.TmallChaoShi
 
                 Writer.writeInvoke(new MessageState { Text = "天猫超市数据采集开始……", PadTime = true });
                 Writer.writeInvoke(new MessageState { Text = "数据正在分析……", PadTime = true });
-
+                Thread.Sleep(1000);
                 //分析数据
                 DataAnalyzing();
                 //输出统计结果
-                Writer.writeInvoke(new StatisticsState { TotalCategories = needCollectCategories.Count(), TotalProducts = collectorQueue.Count() });
+                Writer.writeInvoke(new StatisticsState { TotalProducts = collectorQueue.Count() });
                 Writer.writeInvoke(new MessageState { Text = $"分析完成，结果：共有{collectorQueue.Count()}条商品数据待抓取。", PadTime = true });
 
+                Thread.Sleep(1000);
+                Writer.writeInvoke(new MessageState { Text = "商品采集开始……", PadTime = true });
+
                 //采集工作开始
-                CollectorWork();
+                ThreadPool.QueueUserWorkItem((state) =>
+                {
+                    CollectorWork();
+                }, null);
             }
             else
             {
@@ -157,7 +159,43 @@ namespace ProductCollector.TmallChaoShi
         /// </summary>
         void CollectorWork()
         {
-            Writer.writeInvoke(new MessageState { Text = "商品采集开始……", PadTime = true });
+            int max = 100;// collectorQueue.Count();
+            int collectedNum = 0;
+
+            while (collectorQueue.Any())
+            {
+                var searchRst = collectorQueue.Any() ? collectorQueue.Dequeue() : null;
+
+                if (searchRst != null)
+                {
+                    Writer.writeInvoke(new MessageState { Text = $"开始抓取“{searchRst.Name}”……" });
+
+                    getProduct(searchRst);
+
+                    Thread.Sleep(1000);
+                }
+
+                Writer.writeInvoke(new ProgressState { Max = max, Value = ++collectedNum });
+                Writer.writeInvoke(new StatisticsState { TotalProducts = max, FinishProducts = collectedNum });
+
+                Thread.Sleep(1000);
+            }
+
+            Writer.writeInvoke(new MessageState { Text = $"所有商品抓取完成！" });
+        }
+
+        /// <summary>
+        /// 抓取单个商品
+        /// </summary>
+        /// <param name="searchRst"></param>
+        /// <returns></returns>
+        void getProduct(SearchProductResult searchRst)
+        {
+            //TODO 抓取商品数据
+
+            //TODO 解析成产品库数据
+
+            //TODO 保存到数据库
         }
 
         public void SaveCategoryCollectingRecord(CollectedCategory item)
@@ -253,7 +291,7 @@ namespace ProductCollector.TmallChaoShi
                 Writer.writeInvoke(new MessageState { Text = $"分析“{cat.Name}”下的商品……" });
 
                 next(cat, cat.Link);
-                
+
                 Writer.writeInvoke(new ProgressState { Max = needCollectCategories.Count(), Value = ++catIndex });
 
                 Writer.writeInvoke(new MessageState { Text = $"“{cat.Name}”下的商品分析完成！" });

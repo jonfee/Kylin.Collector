@@ -214,6 +214,7 @@
     <Compile Include="BackState\CallBackState.cs" />
     <Compile Include="CollectorConfig.cs" />
     <Compile Include="Core\Writer.cs" />
+    <Compile Include="Models\TempProduct.cs" />
     <Compile Include="TmallChaoShi\Result\SearchProductResult.cs" />
     <Compile Include="WebClientHelper.cs" />
     <Compile Include="Core\Tools.cs" />

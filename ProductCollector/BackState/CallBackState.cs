@@ -75,17 +75,7 @@ namespace ProductCollector.BackState
     public class StatisticsState : CallBackState
     {
         public override StateType Type => StateType.Statistics;
-
-        /// <summary>
-        /// 总分类数
-        /// </summary>
-        public int TotalCategories { get; set; }
-
-        /// <summary>
-        /// 已完成分类数
-        /// </summary>
-        public int FinishCategories { get; set; }
-
+        
         /// <summary>
         /// 总商品数
         /// </summary>

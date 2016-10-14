@@ -79,8 +79,6 @@ namespace ProductCollector
         {
             InitializeComponent();
 
-            //useForm = UseForm;
-
             bindData();
 
             NeedCollectCategories = new List<TempCategory>();
@@ -157,15 +155,17 @@ namespace ProductCollector
 
             if (service != null)
             {
-                Writer.writeInvoke(new MessageState { Text = "正在从本地加载商品分类……" });
-
+                Writer.writeInvoke(new MessageState { Text = "从本地加载商品分类……" });
+                
                 Categories = service.GetLocationCategories();
 
                 bindCategory();
+
+                Writer.writeInvoke(new MessageState { Text = "加载完成！" });
             }
             else
             {
-                Writer.writeInvoke(new MessageState { Text = "服务异常，无法正常从本地加载商品分类！" });
+                Writer.writeInvoke(new MessageState { Text = "服务异常，无法从本地加载商品分类！" });
             }
         }
 
@@ -180,15 +180,17 @@ namespace ProductCollector
 
             if (service != null)
             {
-                Writer.writeInvoke(new MessageState { Text = "正在从远程下载商品分类……" });
+                Writer.writeInvoke(new MessageState { Text = "从远程下载商品分类……" });
 
                 Categories = service.UpdateCategories();
 
                 bindCategory();
+
+                Writer.writeInvoke(new MessageState { Text = "下载完成！" });
             }
             else
             {
-                Writer.writeInvoke(new MessageState { Text = "服务异常，无法正常从远程下载商品分类！" });
+                Writer.writeInvoke(new MessageState { Text = "服务异常，无法从远程下载商品分类！" });
             }
         }
 
@@ -310,6 +312,8 @@ namespace ProductCollector
 
                 addCheckBox = (cat, idx) =>
                 {
+                    Writer.writeInvoke(new MessageState { Text = $"加载：{cat.Name}" });
+
                     //层级深度
                     int deep = cat.Layer.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Count();
 
@@ -489,6 +493,8 @@ namespace ProductCollector
         {
             if (state == null) return;
 
+            if (state.Value > state.Max) state.Value = state.Max;
+
             this.progressBar.Maximum = state.Max;
             this.progressBar.Value = state.Value;
         }
@@ -501,7 +507,7 @@ namespace ProductCollector
         {
             if (state == null) return;
 
-            string txt = $"共有{state.FinishCategories}/{state.TotalCategories}个分类，{state.FinishProducts}/{state.TotalProducts}条商品数据采集中";
+            string txt = $"商品采集：{state.FinishProducts} / {state.TotalProducts}";
 
             this.lbStatistics.Text = txt;
         }
