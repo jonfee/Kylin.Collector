@@ -10,6 +10,7 @@ using ProductCollector.TmallChaoShi.Result;
 using ProductCollector.Core;
 using ProductCollector.Data;
 using ProductCollector.BackState;
+using System.Threading;
 
 namespace ProductCollector.TmallChaoShi
 {
@@ -94,8 +95,12 @@ namespace ProductCollector.TmallChaoShi
                 categories.Add(category);
             }
 
+            Writer.writeInvoke(new MessageState { Text = "商品分类下载完成，正在更新本地数据……" });
+
             //更新本地商品分类
             new DataService().UpdateCategories(categories);
+
+            Writer.writeInvoke(new MessageState { Text = "本地数据更新完成！" });
 
             return categories;
         }
@@ -110,7 +115,7 @@ namespace ProductCollector.TmallChaoShi
             return null;
         }
 
-        public void Start(IEnumerable<TempCategory> categories, Action<CallBackState> callback)
+        public void Start(IEnumerable<TempCategory> categories)
         {
             this.needCollectCategories = categories ?? new List<TempCategory>();
 
@@ -118,30 +123,41 @@ namespace ProductCollector.TmallChaoShi
             {
                 isRunning = true;
 
-                callback(new MessageState { Text = "天猫超市数据采集开始……", PadTime = true });
-                callback(new MessageState { Text = "数据正在分析……", PadTime = true });
+                Writer.writeInvoke(new MessageState { Text = "天猫超市数据采集开始……", PadTime = true });
+                Writer.writeInvoke(new MessageState { Text = "数据正在分析……", PadTime = true });
 
                 //分析数据
                 DataAnalyzing();
                 //输出统计结果
-                callback(new StatisticsState { TotalCategories = needCollectCategories.Count(), TotalProducts = collectorQueue.Count() });
-                callback(new MessageState { Text = $"分析完成，结果：共有{collectorQueue.Count()}条商品信息待抓取。", PadTime = true });
+                Writer.writeInvoke(new StatisticsState { TotalCategories = needCollectCategories.Count(), TotalProducts = collectorQueue.Count() });
+                Writer.writeInvoke(new MessageState { Text = $"分析完成，结果：共有{collectorQueue.Count()}条商品数据待抓取。", PadTime = true });
+
+                //采集工作开始
+                CollectorWork();
             }
             else
             {
-                callback(new MessageState { Text = "没有可采集的分类！", PadTime = true });
+                Writer.writeInvoke(new MessageState { Text = "没有可采集的分类！", PadTime = true });
             }
         }
 
-        public void Stop(Action<CallBackState> callback)
+        public void Stop()
         {
             Dispose(true);
             isRunning = false;
-            callback(new MessageState
+            Writer.writeInvoke(new MessageState
             {
                 Text = "天猫超市数据采集服务停止！",
                 PadTime = true
             });
+        }
+
+        /// <summary>
+        /// 采集工作开始
+        /// </summary>
+        void CollectorWork()
+        {
+            Writer.writeInvoke(new MessageState { Text = "商品采集开始……", PadTime = true });
         }
 
         public void SaveCategoryCollectingRecord(CollectedCategory item)
@@ -167,73 +183,81 @@ namespace ProductCollector.TmallChaoShi
         {
             collectorQueue = new Queue<SearchProductResult>();
 
-            Task.Run(() =>
+            //已抓取的页数
+            int pageNum = 0;
+
+            //下一页处理
+            var next = Tools.Fix<TempCategory, string, string>(f => (cat, url) =>
             {
-                //已抓取的页数
-                int pageNum = 0;
+                Thread.Sleep(1000);
 
-                //下一页处理
-                var next = Tools.Fix<TempCategory, string, string>(f => (cat, url) =>
-                 {
-                     string nextLink = null;
+                string nextLink = null;
 
-                     //是否继续抓取
-                     bool isContinue = (searchOption.MaxSearchPages < 0 || pageNum < searchOption.MaxSearchPages) && !string.IsNullOrWhiteSpace(url);
+                //是否继续抓取
+                bool isContinue = (searchOption.MaxSearchPages < 0 || pageNum < searchOption.MaxSearchPages) && !string.IsNullOrWhiteSpace(url);
 
-                     if (isContinue)
-                     {
-                         //获取默认商品列表页HTML
-                         string searchHtml = WebClientHelper.GetContent(url, searchOption.Encoding, searchOption.CookieString);
-
-                         //获取下一页链接
-                         Regex nextPageRegex = new Regex(searchOption.NextPagePattern, RegexOptions.IgnoreCase);
-
-                         //匹配下一页html
-                         Match nextMatch = nextPageRegex.Match(searchHtml);
-
-                         nextLink = nextMatch.Groups[searchOption.NextPageLinkGroupName].Value;
-
-                         if (nextLink.StartsWith("?"))
-                         {
-                             nextLink = url.Split('?')[0] + nextLink;
-                         }
-
-                         //捕获当前页所有商品链接
-                         Regex productRegex = new Regex(searchOption.ProductItemPattern, RegexOptions.IgnoreCase);
-
-                         //匹配所有的商品区html
-                         MatchCollection proMatchs = productRegex.Matches(searchHtml);
-
-                         //将匹配到要抓取的商品信息加入队列
-                         foreach (Match m in proMatchs)
-                         {
-                             collectorQueue.Enqueue(new SearchProductResult
-                             {
-                                 SiteCatId = cat.SiteCatId,
-                                 CategoryId = cat.CategoryId,
-                                 Name = m.Groups[searchOption.ProductTitleGroupName].Value,
-                                 Link = m.Groups[searchOption.ProductItemLinkGroupName].Value
-                             });
-                         }
-
-                         pageNum++;//抓取的页数+1
-
-                         //存在下一页，则继续下一页数据抓取
-                         if (!string.IsNullOrWhiteSpace(nextLink))
-                         {
-                             nextLink = f(cat, nextLink);
-                         }
-                     }
-
-                     return nextLink;
-                 });
-
-                //遍历采集的分类
-                foreach (var cat in needCollectCategories)
+                if (isContinue)
                 {
-                    next(cat, cat.Link);
+                    //获取默认商品列表页HTML
+                    string searchHtml = WebClientHelper.GetContent(url, searchOption.Encoding, searchOption.CookieString);
+
+                    //获取下一页链接
+                    Regex nextPageRegex = new Regex(searchOption.NextPagePattern, RegexOptions.IgnoreCase);
+
+                    //匹配下一页html
+                    Match nextMatch = nextPageRegex.Match(searchHtml);
+
+                    nextLink = nextMatch.Groups[searchOption.NextPageLinkGroupName].Value;
+
+                    if (nextLink.StartsWith("?"))
+                    {
+                        nextLink = url.Split('?')[0] + nextLink;
+                    }
+
+                    //捕获当前页所有商品链接
+                    Regex productRegex = new Regex(searchOption.ProductItemPattern, RegexOptions.IgnoreCase);
+
+                    //匹配所有的商品区html
+                    MatchCollection proMatchs = productRegex.Matches(searchHtml);
+
+                    //将匹配到要抓取的商品信息加入队列
+                    foreach (Match m in proMatchs)
+                    {
+                        collectorQueue.Enqueue(new SearchProductResult
+                        {
+                            SiteCatId = cat.SiteCatId,
+                            CategoryId = cat.CategoryId,
+                            Name = m.Groups[searchOption.ProductTitleGroupName].Value,
+                            Link = m.Groups[searchOption.ProductItemLinkGroupName].Value
+                        });
+                    }
+
+                    pageNum++;//抓取的页数+1
+
+                    //存在下一页，则继续下一页数据抓取
+                    if (!string.IsNullOrWhiteSpace(nextLink))
+                    {
+                        nextLink = f(cat, nextLink);
+                    }
                 }
-            }).Wait();
+
+                return nextLink;
+            });
+
+            int catIndex = 0;
+            //遍历采集的分类
+            foreach (var cat in needCollectCategories)
+            {
+                pageNum = 0;
+
+                Writer.writeInvoke(new MessageState { Text = $"分析“{cat.Name}”下的商品……" });
+
+                next(cat, cat.Link);
+                
+                Writer.writeInvoke(new ProgressState { Max = needCollectCategories.Count(), Value = ++catIndex });
+
+                Writer.writeInvoke(new MessageState { Text = $"“{cat.Name}”下的商品分析完成！" });
+            }
         }
 
         #endregion

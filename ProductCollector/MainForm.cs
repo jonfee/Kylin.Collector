@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -38,19 +39,61 @@ namespace ProductCollector
         /// </summary>
         IEnumerable<TempCategory> NeedCollectCategories;
 
+        int _categoriesCount = -1;
+        /// <summary>
+        /// 当前采集服务的商品分类数
+        /// </summary>
+        int CategoriesCount
+        {
+            get
+            {
+                if (_categoriesCount < 0)
+                {
+                    int count = 0;
+
+                    var sum = Tools.Fix<IEnumerable<TempCategory>, int>(s => (data) =>
+                    {
+                        foreach (var cat in data)
+                        {
+                            if (cat == null) continue;
+
+                            count++;
+
+                            if (cat.Child != null && cat.Child.Count() > 0)
+                            {
+                                s(cat.Child);
+                            }
+                        }
+
+                        return count;
+                    });
+
+                    _categoriesCount = sum(Categories);
+                }
+
+                return _categoriesCount;
+            }
+        }
+
         public MainForm()
         {
             InitializeComponent();
 
+            //useForm = UseForm;
+
             bindData();
 
             NeedCollectCategories = new List<TempCategory>();
-
-            useForm = UseForm;
         }
 
+        /// <summary>
+        /// 初始化时绑定
+        /// </summary>
         void bindData()
         {
+            Writer.OutputForm = this;
+            Writer.write = serviceCallback;
+
             //Form
             this.Text = $"产品采集器（v{System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString()}）";
 
@@ -62,13 +105,13 @@ namespace ProductCollector
             this.cbSourceSite.DisplayMember = "name";
             this.cbSourceSite.DataSource = sites;
 
+            this.btnLoadLocationCategory.Visible = false;
+            this.btnDownloadCategory.Visible = false;
+
             //启动服务按钮不可用（初始化）
             this.btnStart.Enabled = false;
             //停止服务按钮不可用（初始化）
             this.btnStop.Enabled = false;
-
-            //更新商品分类按钮不可用（初始化）
-            this.lkUpdateCategory.Visible = false;
         }
 
         /// <summary>
@@ -78,20 +121,74 @@ namespace ProductCollector
         /// <param name="e"></param>
         private void cbSourceSite_SelectedIndexChanged(object sender, EventArgs e)
         {
-            site = this.cbSourceSite.SelectedItem as CollectorSite;
+            if (site != null) resetProgressBar();
 
-            switch (site.Type)
+            var currentSite = this.cbSourceSite.SelectedItem as CollectorSite;
+
+            if (site == null || site.Name != currentSite.Name)
             {
-                case 1: //天猫超市
-                    service = new TmallChaoShi.TmallChaoShiService();
-                    break;
+                service = null;
+                this.Categories = new List<TempCategory>();
+                this.NeedCollectCategories = new List<TempCategory>();
+                this.panelCategory.Controls.Clear();
+
+                switch (currentSite.Type)
+                {
+                    case 1: //天猫超市
+                        service = new TmallChaoShi.TmallChaoShiService();
+                        break;
+                }
+
+                site = currentSite;
             }
+
+            checkLoadCategory();
+            checkServiceStatus();
+        }
+
+        /// <summary>
+        /// 从本地加载商品分类
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnLoadLocationCategory_Click(object sender, EventArgs e)
+        {
+            resetProgressBar();
 
             if (service != null)
             {
+                Writer.writeInvoke(new MessageState { Text = "正在从本地加载商品分类……" });
+
                 Categories = service.GetLocationCategories();
 
-                useForm(BindCategory);
+                bindCategory();
+            }
+            else
+            {
+                Writer.writeInvoke(new MessageState { Text = "服务异常，无法正常从本地加载商品分类！" });
+            }
+        }
+
+        /// <summary>
+        /// 从远程采集站下载最新商品分类
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnDownloadCategory_Click(object sender, EventArgs e)
+        {
+            resetProgressBar();
+
+            if (service != null)
+            {
+                Writer.writeInvoke(new MessageState { Text = "正在从远程下载商品分类……" });
+
+                Categories = service.UpdateCategories();
+
+                bindCategory();
+            }
+            else
+            {
+                Writer.writeInvoke(new MessageState { Text = "服务异常，无法正常从远程下载商品分类！" });
             }
         }
 
@@ -102,16 +199,18 @@ namespace ProductCollector
         /// <param name="e"></param>
         private void btnStart_Click(object sender, EventArgs e)
         {
+            resetProgressBar();
+
             if (NeedCollectCategories.Any())
             {
-                service.Start(this.NeedCollectCategories, ServiceCallback);
+                service.Start(this.NeedCollectCategories);
             }
             else
             {
                 MessageBox.Show("请选择需要采集的商品分类");
             }
 
-            CheckServiceStatus();
+            checkServiceStatus();
         }
 
         /// <summary>
@@ -121,24 +220,34 @@ namespace ProductCollector
         /// <param name="e"></param>
         private void btnStop_Click(object sender, EventArgs e)
         {
-            service.Stop(ServiceCallback);
+            resetProgressBar();
 
-            CheckServiceStatus();
+            service.Stop();
+
+            checkServiceStatus();
         }
 
         /// <summary>
-        /// 从采集站更新商品分类
+        /// 检验商品分类加载
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void lkUpdateCategory_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        void checkLoadCategory()
         {
-            Categories = service.UpdateCategories();
-
-            useForm(BindCategory);
+            if (service != null)
+            {
+                this.btnLoadLocationCategory.Visible = true;
+                this.btnDownloadCategory.Visible = true;
+            }
+            else
+            {
+                this.btnLoadLocationCategory.Visible = false;
+                this.btnDownloadCategory.Visible = false;
+            }
         }
 
-        private void CheckServiceStatus()
+        /// <summary>
+        /// 检验采集服务状态
+        /// </summary>
+        void checkServiceStatus()
         {
             if (service != null)
             {
@@ -148,24 +257,50 @@ namespace ProductCollector
                 {
                     this.btnStart.Enabled = false;
                     this.btnStop.Enabled = true;
+                    this.cbSourceSite.Enabled = false;
+                    this.btnLoadLocationCategory.Enabled = false;
+                    this.btnDownloadCategory.Enabled = false;
+                    this.panelCategory.Enabled = false;
                 }
-                else
+                else if (NeedCollectCategories.Any())
                 {
                     this.btnStart.Enabled = true;
                     this.btnStop.Enabled = false;
+                    this.cbSourceSite.Enabled = true;
+                    this.btnLoadLocationCategory.Enabled = true;
+                    this.btnDownloadCategory.Enabled = true;
+                    this.panelCategory.Enabled = true;
                 }
             }
+            else
+            {
+                this.cbSourceSite.Enabled = true;
+            }
+        }
+
+        /// <summary>
+        /// 重置进度条
+        /// </summary>
+        void resetProgressBar()
+        {
+            Writer.writeInvoke(new ProgressState { Max = 0, Value = 0 });
         }
 
         #region 绑定商品分类到控件
         /// <summary>
         /// 绑定商品分类到控件
         /// </summary>
-        private void BindCategory()
+        void bindCategory()
         {
+            _categoriesCount = -1;
+
+            this.btnLoadLocationCategory.Enabled = this.btnDownloadCategory.Enabled = false;
+
+            this.panelCategory.Controls.Clear();
+
             lock (locker)
             {
-                this.panelCategory.Controls.Clear();
+                int count = 0;
 
                 int row = 0; int itemW = 130; int itemH = 20; int deepPadW = 20;
 
@@ -212,15 +347,16 @@ namespace ProductCollector
                             addCheckBox(cat.Child[i], i);
                         }
                     }
+                    Writer.writeInvoke(new BackState.ProgressState { Max = CategoriesCount, Value = ++count });
                 };
 
                 for (var i = 0; i < Categories.Count(); i++)
                 {
                     addCheckBox(Categories.ElementAt(i), i);
                 }
-
-                this.lkUpdateCategory.Visible = true;
             }
+
+            this.btnLoadLocationCategory.Enabled = this.btnDownloadCategory.Enabled = true;
         }
 
         /// <summary>
@@ -230,7 +366,7 @@ namespace ProductCollector
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void categoryChanged(object sender, EventArgs e)
+        void categoryChanged(object sender, EventArgs e)
         {
             //重新统计需要采集的分类
             var tempCollectorCategoies = new List<TempCategory>();
@@ -287,7 +423,7 @@ namespace ProductCollector
         /// </summary>
         /// <param name="categoryId"></param>
         /// <returns></returns>
-        private TempCategory findTempCategory(long categoryId)
+        TempCategory findTempCategory(long categoryId)
         {
             //定义查找方法
             var find = Tools.Fix<TempCategory, TempCategory>(f => (cat) =>
@@ -329,82 +465,62 @@ namespace ProductCollector
         /// 抓取服务回调方法
         /// </summary>
         /// <param name="state">回调对象</param>
-        private void ServiceCallback(CallBackState state)
+        void serviceCallback(CallBackState state)
         {
             if (state is MessageState)
             {
-                WriteMessage(state as MessageState);
+                writeMessage(state as MessageState);
             }
             else if (state is StatisticsState)
             {
-                WriteStatistics(state as StatisticsState);
+                writeStatistics(state as StatisticsState);
             }
+            else if (state is ProgressState)
+            {
+                writeProgressBar(state as ProgressState);
+            }
+        }
+
+        /// <summary>
+        /// 输出进度
+        /// </summary>
+        /// <param name="state"></param>
+        void writeProgressBar(ProgressState state)
+        {
+            if (state == null) return;
+
+            this.progressBar.Maximum = state.Max;
+            this.progressBar.Value = state.Value;
         }
 
         /// <summary>
         /// 输出统计信息
         /// </summary>
         /// <param name="state"></param>
-        void WriteStatistics(StatisticsState state)
+        void writeStatistics(StatisticsState state)
         {
             if (state == null) return;
 
-            useForm(() =>
-            {
-                string txt = $"采集结果：{state.FinishCategories}/{state.TotalCategories}个分类，{state.FinishProducts}/{state.TotalProducts}条商品数据";
+            string txt = $"共有{state.FinishCategories}/{state.TotalCategories}个分类，{state.FinishProducts}/{state.TotalProducts}条商品数据采集中";
 
-                this.lbStatistics.Text = txt;
-            });
+            this.lbStatistics.Text = txt;
         }
 
         /// <summary>
         /// 输出消息
         /// </summary>
         /// <param name="state"></param>
-        void WriteMessage(MessageState state)
+        void writeMessage(MessageState state)
         {
             if (state == null) return;
 
-            useForm(() =>
+            if (state.PadTime)
             {
-                if (state.PadTime)
-                {
-                    state.Text += DateTime.Now.ToString(" --yyyy-MM-dd HH:mm:ss");
-                }
-                this.rtxtMsg.AppendText(state.Text);
-                this.rtxtMsg.AppendText("\n");
-                this.rtxtMsg.Focus();
-            });
-        }
-
-        #endregion
-
-        #region 支持异步线程和多线程中使用窗体控件
-
-        /// <summary>
-        /// 委托变量（使用窗体，并执行操作）
-        /// </summary>
-        private UseFormDelegate useForm;
-
-        /// <summary>
-        /// 定义委托（使用窗体，并执行操作）
-        /// </summary>
-        /// <param name="action"></param>
-        private delegate void UseFormDelegate(Action action);
-
-        /// <summary>
-        /// 使用窗体，并执行操作
-        /// </summary>
-        /// <param name="action"></param>
-        private void UseForm(Action action)
-        {
-            new Task(() =>
-            {
-                this.Invoke((EventHandler)delegate
-                {
-                    action();
-                });
-            }).Start();
+                state.Text += DateTime.Now.ToString(" --yyyy-MM-dd HH:mm:ss");
+            }
+            this.rtxtMsg.AppendText(state.Text);
+            this.rtxtMsg.AppendText("\n");
+            this.rtxtMsg.Focus();
         }
 
         #endregion

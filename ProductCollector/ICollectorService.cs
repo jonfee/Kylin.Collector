@@ -26,8 +26,7 @@ namespace ProductCollector
         /// 采集服务开始
         /// </summary>
         /// <param name="categories">需要采集的分类</param>
-        /// <param name="callback">回调</param>
-        void Start(IEnumerable<TempCategory> categories, Action<CallBackState> callback);
+        void Start(IEnumerable<TempCategory> categories);
 
         /// <summary>
         /// 保存分类采集记录
@@ -47,7 +46,6 @@ namespace ProductCollector
         /// <summary>
         /// 采集服务停止
         /// </summary>
-        /// <param name="callback">回调</param>
-        void Stop(Action<CallBackState> callback);
+        void Stop();
     }
 }

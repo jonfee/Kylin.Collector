@@ -29,29 +29,31 @@
         private void InitializeComponent()
         {
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.btnDownloadCategory = new System.Windows.Forms.Button();
+            this.btnLoadLocationCategory = new System.Windows.Forms.Button();
+            this.lbStatistics = new System.Windows.Forms.Label();
+            this.panelCategory = new System.Windows.Forms.Panel();
             this.btnStop = new System.Windows.Forms.Button();
             this.btnStart = new System.Windows.Forms.Button();
             this.label2 = new System.Windows.Forms.Label();
-            this.lkUpdateCategory = new System.Windows.Forms.LinkLabel();
             this.cbSourceSite = new System.Windows.Forms.ComboBox();
             this.label1 = new System.Windows.Forms.Label();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.panelCategory = new System.Windows.Forms.Panel();
             this.rtxtMsg = new System.Windows.Forms.RichTextBox();
-            this.progressBar1 = new System.Windows.Forms.ProgressBar();
-            this.lbStatistics = new System.Windows.Forms.Label();
+            this.progressBar = new System.Windows.Forms.ProgressBar();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.btnDownloadCategory);
+            this.groupBox1.Controls.Add(this.btnLoadLocationCategory);
             this.groupBox1.Controls.Add(this.lbStatistics);
             this.groupBox1.Controls.Add(this.panelCategory);
             this.groupBox1.Controls.Add(this.btnStop);
             this.groupBox1.Controls.Add(this.btnStart);
             this.groupBox1.Controls.Add(this.label2);
-            this.groupBox1.Controls.Add(this.lkUpdateCategory);
             this.groupBox1.Controls.Add(this.cbSourceSite);
             this.groupBox1.Controls.Add(this.label1);
             this.groupBox1.Location = new System.Drawing.Point(13, 13);
@@ -60,6 +62,42 @@
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "参数设置";
+            // 
+            // btnDownloadCategory
+            // 
+            this.btnDownloadCategory.Location = new System.Drawing.Point(472, 27);
+            this.btnDownloadCategory.Name = "btnDownloadCategory";
+            this.btnDownloadCategory.Size = new System.Drawing.Size(85, 23);
+            this.btnDownloadCategory.TabIndex = 18;
+            this.btnDownloadCategory.Text = "下载最新分类";
+            this.btnDownloadCategory.UseVisualStyleBackColor = true;
+            this.btnDownloadCategory.Click += new System.EventHandler(this.btnDownloadCategory_Click);
+            // 
+            // btnLoadLocationCategory
+            // 
+            this.btnLoadLocationCategory.Location = new System.Drawing.Point(368, 27);
+            this.btnLoadLocationCategory.Name = "btnLoadLocationCategory";
+            this.btnLoadLocationCategory.Size = new System.Drawing.Size(87, 23);
+            this.btnLoadLocationCategory.TabIndex = 17;
+            this.btnLoadLocationCategory.Text = "本地加载分类";
+            this.btnLoadLocationCategory.UseVisualStyleBackColor = true;
+            this.btnLoadLocationCategory.Click += new System.EventHandler(this.btnLoadLocationCategory_Click);
+            // 
+            // lbStatistics
+            // 
+            this.lbStatistics.AutoSize = true;
+            this.lbStatistics.Location = new System.Drawing.Point(375, 300);
+            this.lbStatistics.Name = "lbStatistics";
+            this.lbStatistics.Size = new System.Drawing.Size(0, 12);
+            this.lbStatistics.TabIndex = 16;
+            // 
+            // panelCategory
+            // 
+            this.panelCategory.AutoScroll = true;
+            this.panelCategory.Location = new System.Drawing.Point(133, 73);
+            this.panelCategory.Name = "panelCategory";
+            this.panelCategory.Size = new System.Drawing.Size(725, 203);
+            this.panelCategory.TabIndex = 15;
             // 
             // btnStop
             // 
@@ -90,17 +128,6 @@
             this.label2.TabIndex = 10;
             this.label2.Text = "需要采集的分类：";
             // 
-            // lkUpdateCategory
-            // 
-            this.lkUpdateCategory.AutoSize = true;
-            this.lkUpdateCategory.Location = new System.Drawing.Point(372, 34);
-            this.lkUpdateCategory.Name = "lkUpdateCategory";
-            this.lkUpdateCategory.Size = new System.Drawing.Size(101, 12);
-            this.lkUpdateCategory.TabIndex = 9;
-            this.lkUpdateCategory.TabStop = true;
-            this.lkUpdateCategory.Text = "下载最新商品分类";
-            this.lkUpdateCategory.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.lkUpdateCategory_LinkClicked);
-            // 
             // cbSourceSite
             // 
             this.cbSourceSite.FormattingEnabled = true;
@@ -129,14 +156,6 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "采集结果";
             // 
-            // panelCategory
-            // 
-            this.panelCategory.AutoScroll = true;
-            this.panelCategory.Location = new System.Drawing.Point(133, 73);
-            this.panelCategory.Name = "panelCategory";
-            this.panelCategory.Size = new System.Drawing.Size(725, 203);
-            this.panelCategory.TabIndex = 15;
-            // 
             // rtxtMsg
             // 
             this.rtxtMsg.Location = new System.Drawing.Point(7, 21);
@@ -145,27 +164,19 @@
             this.rtxtMsg.TabIndex = 0;
             this.rtxtMsg.Text = "";
             // 
-            // progressBar1
+            // progressBar
             // 
-            this.progressBar1.Location = new System.Drawing.Point(13, 366);
-            this.progressBar1.Name = "progressBar1";
-            this.progressBar1.Size = new System.Drawing.Size(875, 13);
-            this.progressBar1.TabIndex = 2;
-            // 
-            // lbStatistics
-            // 
-            this.lbStatistics.AutoSize = true;
-            this.lbStatistics.Location = new System.Drawing.Point(375, 300);
-            this.lbStatistics.Name = "lbStatistics";
-            this.lbStatistics.Size = new System.Drawing.Size(0, 12);
-            this.lbStatistics.TabIndex = 16;
+            this.progressBar.Location = new System.Drawing.Point(13, 366);
+            this.progressBar.Name = "progressBar";
+            this.progressBar.Size = new System.Drawing.Size(875, 13);
+            this.progressBar.TabIndex = 2;
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(900, 650);
-            this.Controls.Add(this.progressBar1);
+            this.Controls.Add(this.progressBar);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
             this.Name = "MainForm";
@@ -182,15 +193,16 @@
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.ComboBox cbSourceSite;
-        private System.Windows.Forms.LinkLabel lkUpdateCategory;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Button btnStop;
         private System.Windows.Forms.Button btnStart;
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.Panel panelCategory;
         private System.Windows.Forms.RichTextBox rtxtMsg;
-        private System.Windows.Forms.ProgressBar progressBar1;
+        private System.Windows.Forms.ProgressBar progressBar;
         private System.Windows.Forms.Label lbStatistics;
+        private System.Windows.Forms.Button btnDownloadCategory;
+        private System.Windows.Forms.Button btnLoadLocationCategory;
     }
 }
 
