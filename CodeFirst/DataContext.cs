@@ -1,14 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System.Configuration;
 using Td.Kylin.Collector.Entity;
 
-namespace ProductCollector.Data
+namespace CodeFirst
 {
     public class DataContext : DbContext
     {
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            string connString = ConfigurationManager.ConnectionStrings["DefaultConnectionString"].ConnectionString;
+            string connString = Startup.Configuration["Data:DefaultConnectionString"];
             optionsBuilder.UseSqlServer(connString);
         }
 

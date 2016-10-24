@@ -1,11 +1,9 @@
 ﻿using ProductCollector.Core;
-using ProductCollector.Data.Entity;
 using ProductCollector.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Td.Kylin.Collector.Entity;
 
 namespace ProductCollector.Data
 {
@@ -24,12 +22,12 @@ namespace ProductCollector.Data
                             where c.Source == type
                             select new TempCategory
                             {
-                                SiteCatId = 0,
+                                SiteCatId = c.SourceCategoryId,
                                 Layer = c.Layer,
                                 Link = c.Path,
                                 Name = c.Name,
-                                CategoryId = c.CategoryID,
-                                ParentId = c.ParentID
+                                CategoryId = c.CategoryId,
+                                ParentId = c.ParentId
                             }).ToList();
 
                 List<TempCategory> list = data.Where(p => p.ParentId == 0).ToList();
@@ -46,7 +44,7 @@ namespace ProductCollector.Data
 
                     return child;
                 });
-                
+
                 foreach (var item in list)
                 {
                     item.Child = find(item.CategoryId, data);
@@ -69,19 +67,20 @@ namespace ProductCollector.Data
                     if (cat != null)
                     {
                         //数据库中是否存在
-                        var item = db.Category.SingleOrDefault(p => p.CategoryID == cat.CategoryId);
+                        var item = db.Category.SingleOrDefault(p => p.CategoryId == cat.CategoryId);
 
                         if (item == null)
                         {
                             db.Add(new Category
                             {
-                                CategoryID = cat.CategoryId,
+                                CategoryId = cat.CategoryId,
+                                SourceCategoryId = cat.SiteCatId,
                                 CreateTime = DateTime.Now,
                                 Icon = string.Empty,
                                 IsDelete = false,
                                 Layer = cat.Layer,
                                 Name = cat.Name,
-                                ParentID = cat.ParentId,
+                                ParentId = cat.ParentId,
                                 Path = cat.Link,
                                 Source = cat.Type,
                                 UpdateTime = DateTime.Now
@@ -116,6 +115,6 @@ namespace ProductCollector.Data
                 db.SaveChanges();
             }
         }
-        
+
     }
 }

@@ -20,5 +20,11 @@
       -->
       <productpattern titleGroup="title" linkGroup="href">&lt;(h3 class="product-title"|p class="productTitle")&gt;[^&lt;]*&lt;a href="(?&lt;href&gt;[^"]+)"[^&gt;]*&gt;(?&lt;title&gt;(?:(?!&lt;/a&gt;).|\n)+)&lt;/a&gt;[^&lt;]*&lt;/(h3|p)&gt;</productpattern>
     </search>
+    <details charset="gbk">
+      <pattern>
+        <!--<h1 data-spm="\d+">(?<title>(?:(?!</h1>).|\n)+)</h1>-->
+        <title group="title">&lt;h1 data-spm="\d+"&gt;(?&lt;title&gt;(?:(?!&lt;/h1&gt;).|\n)+)&lt;/h1&gt;</title>
+      </pattern>
+    </details>
   </category>
 </root>

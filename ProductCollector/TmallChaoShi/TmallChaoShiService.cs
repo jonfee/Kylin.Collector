@@ -23,6 +23,8 @@ namespace ProductCollector.TmallChaoShi
 
         CategoryOption categoryOption = TmallChaoShiConfig.Instance.CategoryOption;
 
+        DetailsOption detailsOption = TmallChaoShiConfig.Instance.DetailsOption;
+
         /// <summary>
         /// 采集类型
         /// </summary>
@@ -39,9 +41,9 @@ namespace ProductCollector.TmallChaoShi
         IEnumerable<TempCategory> needCollectCategories;
 
         /// <summary>
-        /// 采集任务
+        /// 商品采集线程
         /// </summary>
-        Task collectorTask;
+        Thread collectThread;
 
         /// <summary>
         /// 队列-需要采集的商品
@@ -97,7 +99,7 @@ namespace ProductCollector.TmallChaoShi
 
             //更新本地商品分类
             new DataService().UpdateCategories(categories);
-            
+
             return categories;
         }
 
@@ -131,11 +133,9 @@ namespace ProductCollector.TmallChaoShi
                 Thread.Sleep(1000);
                 Writer.writeInvoke(new MessageState { Text = "商品采集开始……", PadTime = true });
 
-                //采集工作开始
-                ThreadPool.QueueUserWorkItem((state) =>
-                {
-                    CollectorWork();
-                }, null);
+                //采集线程
+                collectThread = new Thread(new ThreadStart(CollectorWork));
+                collectThread.Start();
             }
             else
             {
@@ -170,15 +170,18 @@ namespace ProductCollector.TmallChaoShi
                 {
                     Writer.writeInvoke(new MessageState { Text = $"开始抓取“{searchRst.Name}”……" });
 
-                    getProduct(searchRst);
+                    bool success = getProduct(searchRst);
+
+                    if (!success)
+                    {
+                        Writer.writeInvoke(new MessageState { Text = $"“{searchRst.Name}”抓取失败！ " });
+                    }
 
                     Thread.Sleep(1000);
                 }
 
                 Writer.writeInvoke(new ProgressState { Max = max, Value = ++collectedNum });
                 Writer.writeInvoke(new StatisticsState { TotalProducts = max, FinishProducts = collectedNum });
-
-                Thread.Sleep(1000);
             }
 
             Writer.writeInvoke(new MessageState { Text = $"所有商品抓取完成！" });
@@ -189,13 +192,20 @@ namespace ProductCollector.TmallChaoShi
         /// </summary>
         /// <param name="searchRst"></param>
         /// <returns></returns>
-        void getProduct(SearchProductResult searchRst)
+        bool getProduct(SearchProductResult searchRst)
         {
+            if (searchRst == null) return false;
+
             //TODO 抓取商品数据
+            var detailsHtml = WebClientHelper.GetContent(searchRst.Link, detailsOption.Encoding);
+
+            
 
             //TODO 解析成产品库数据
 
             //TODO 保存到数据库
+
+            return true;
         }
 
         public void SaveCategoryCollectingRecord(CollectedCategory item)
@@ -265,7 +275,7 @@ namespace ProductCollector.TmallChaoShi
                         {
                             SiteCatId = cat.SiteCatId,
                             CategoryId = cat.CategoryId,
-                            Name = m.Groups[searchOption.ProductTitleGroupName].Value,
+                            Name = Tools.IgnoreHtmlTag(m.Groups[searchOption.ProductTitleGroupName].Value),
                             Link = m.Groups[searchOption.ProductItemLinkGroupName].Value
                         });
                     }
@@ -315,7 +325,11 @@ namespace ProductCollector.TmallChaoShi
             {
                 if (disposing)
                 {
-                    if (collectorTask != null) collectorTask.Dispose();
+                    if (collectThread != null)
+                    {
+                        collectThread.Abort();
+                        collectThread = null;
+                    }
                 }
 
                 m_disposed = true;

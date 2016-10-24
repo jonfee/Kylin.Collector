@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
@@ -38,6 +39,8 @@ namespace ProductCollector.TmallChaoShi
             this.CategoryOption = new CategoryOption();
 
             this.SearchOption = new SearchOption();
+
+            this.DetailsOption = new DetailsOption();
 
             //加载采集器配置信息xml文档
             string xmlPath = Path.Combine(AppContext.BaseDirectory, "tmallchaoshi.xml");
@@ -75,6 +78,10 @@ namespace ProductCollector.TmallChaoShi
                 else if (name == "search")
                 {
                     GetSearchProductConfig(e);
+                }
+                else if (name == "details")
+                {
+                    GetProductDetailsConfig(e);
                 }
             }
         }
@@ -157,6 +164,18 @@ namespace ProductCollector.TmallChaoShi
             }
         }
 
+        /// <summary>
+        /// 获取商品详情数据时的相关配置
+        /// </summary>
+        /// <param name="em"></param>
+        private void GetProductDetailsConfig(XElement em)
+        {
+            string charset = em.Attribute("charset").Value;
+            if (string.IsNullOrWhiteSpace(charset)) charset = "utf-8";
+
+            this.DetailsOption.Encoding = Encoding.GetEncoding(charset);
+        }
+
         #region 配置项
 
         /// <summary>
@@ -168,6 +187,11 @@ namespace ProductCollector.TmallChaoShi
         /// 获取分类下的商品列表配置项
         /// </summary>
         public SearchOption SearchOption { get; set; }
+
+        /// <summary>
+        /// 获取商品详情数据配置项
+        /// </summary>
+        public DetailsOption DetailsOption { get; set; }
 
 
         #endregion
@@ -259,6 +283,14 @@ namespace ProductCollector.TmallChaoShi
         /// 最多获取页数
         /// </summary>
         public int MaxSearchPages { get; set; }
+    }
+
+    public class DetailsOption
+    {
+        /// <summary>
+        /// 字符编码
+        /// </summary>
+        public Encoding Encoding { get; set; }
     }
     #endregion
 }

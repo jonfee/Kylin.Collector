@@ -33,7 +33,7 @@ namespace ProductCollector
 
                 var data = client.DownloadString(url);
 
-                return data;
+                return data ?? string.Empty;
             }
         }
     }
