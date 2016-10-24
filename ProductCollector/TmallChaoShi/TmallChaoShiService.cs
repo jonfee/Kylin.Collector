@@ -417,7 +417,7 @@ namespace ProductCollector.TmallChaoShi
                     Layer = parent.Layer + "," + newCatId.ToString(),
                     Name = cat.Title,
                     CategoryId = newCatId,
-                    ParentId = parent.ParentId,
+                    ParentId = parent.CategoryId,
                     Type = collectorType
                 };
 
@@ -457,7 +457,7 @@ namespace ProductCollector.TmallChaoShi
                     Layer = parent.Layer + "," + newCatId.ToString(),
                     Name = cat.Text,
                     CategoryId = newCatId,
-                    ParentId = parent.ParentId,
+                    ParentId = parent.CategoryId,
                     Type = collectorType
                 };
 
