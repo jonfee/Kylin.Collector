@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 
 namespace ProductCollector.TmallChaoShi.Result
 {
-    public class ResultTools
+    public static class ResultTools
     {
         /// <summary>
         /// 从分类商品链接中获取分类ID
         /// </summary>
         /// <param name="link"></param>
         /// <returns></returns>
-        public static long GetCategoryByLink(string link)
+        public static long GetCategoryByLink(this string link)
         {
             if (!string.IsNullOrWhiteSpace(link))
             {
@@ -36,6 +36,24 @@ namespace ProductCollector.TmallChaoShi.Result
             }
 
             return 0;
+        }
+
+        /// <summary>
+        /// 获取完整链接
+        /// </summary>
+        /// <param name="link"></param>
+        /// <param name="starts"></param>
+        /// <returns></returns>
+        public static string GetFullLink(this string link, string starts = null)
+        {
+            if (string.IsNullOrWhiteSpace(starts)) starts = TmallChaoShiConfig.Instance.HttpProtocols;
+
+            if (!string.IsNullOrWhiteSpace(link) && !link.StartsWith(starts))
+            {
+                link = starts + link.TrimStart('/');
+            }
+
+            return link;
         }
     }
 }

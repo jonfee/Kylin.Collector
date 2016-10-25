@@ -31,6 +31,8 @@ namespace ProductCollector
                     client.BaseAddress = baseAddress;
                 }
 
+                ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
+
                 var data = client.DownloadString(url);
 
                 return data ?? string.Empty;

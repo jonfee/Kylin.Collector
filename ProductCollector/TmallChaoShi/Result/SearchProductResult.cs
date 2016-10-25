@@ -22,11 +22,7 @@ namespace ProductCollector.TmallChaoShi.Result
         {
             get
             {
-                if (!string.IsNullOrWhiteSpace(_link) && !_link.StartsWith("https://"))
-                {
-                    _link = "https://" + _link.TrimStart('/');
-                }
-                return _link;
+                return _link.GetFullLink();
             }
             set
             {

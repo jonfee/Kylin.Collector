@@ -11,6 +11,7 @@ using ProductCollector.Core;
 using ProductCollector.Data;
 using ProductCollector.BackState;
 using System.Threading;
+using Td.Kylin.Collector.Entity;
 
 namespace ProductCollector.TmallChaoShi
 {
@@ -159,10 +160,14 @@ namespace ProductCollector.TmallChaoShi
         /// </summary>
         void CollectorWork()
         {
-            int max = 100;// collectorQueue.Count();
+            int max = collectorQueue.Count();
             int collectedNum = 0;
 
-            while (collectorQueue.Any())
+            int num = 0;
+
+            Writer.writeInvoke(new ProgressState { Max = max, Value = collectedNum });
+
+            while (collectorQueue.Any() && num++ == 0)
             {
                 var searchRst = collectorQueue.Any() ? collectorQueue.Dequeue() : null;
 
@@ -196,16 +201,119 @@ namespace ProductCollector.TmallChaoShi
         {
             if (searchRst == null) return false;
 
-            //TODO 抓取商品数据
+            #region//TODO 抓取商品数据
             var detailsHtml = WebClientHelper.GetContent(searchRst.Link, detailsOption.Encoding);
 
-            
+            //商品装载数据
+            ProductSetupResult setup = null;
+            Regex setupRegex = new Regex(detailsOption.SetupRegex.Pattern, RegexOptions.IgnoreCase);
+            Match setupMatch = setupRegex.Match(detailsHtml);
+            if (setupMatch != null)
+            {
+                string setupData = setupMatch.Groups[detailsOption.SetupRegex.GroupName].Value;
+                setup = JsonConvert.DeserializeObject<ProductSetupResult>(setupData);
+            }
 
-            //TODO 解析成产品库数据
+            //图片
+            List<string> images = new List<string>();
+            Regex imagesRegex = new Regex(detailsOption.ImagesDataRegex.Pattern, RegexOptions.IgnoreCase);
+            Match imagesMatch = imagesRegex.Match(detailsHtml);
+            if (imagesMatch != null)
+            {
+                string imagesData = imagesMatch.Groups[detailsOption.ImagesDataRegex.GroupName].Value;
 
-            //TODO 保存到数据库
+                Regex singleImgRegex = new Regex(detailsOption.SingleImageRegex.Pattern, RegexOptions.IgnoreCase);
 
-            return true;
+                MatchCollection singleImgMatches = singleImgRegex.Matches(imagesData);
+
+                Regex removeRegex = new Regex(detailsOption.ImageSrcRemoveRegex.Pattern, RegexOptions.IgnoreCase);
+
+                foreach (Match m in singleImgMatches)
+                {
+                    string src = m.Groups[detailsOption.SingleImageRegex.GroupName].Value.GetFullLink();
+
+                    src = removeRegex.Replace(src, "");
+
+                    images.Add(src);
+                }
+            }
+
+            //商品描述
+            string desc = null;
+            var descHtml = WebClientHelper.GetContent(setup.Api.DescUrl, detailsOption.Encoding);
+            Regex descRegex = new Regex(detailsOption.DescRegex.Pattern, RegexOptions.IgnoreCase);
+            Match descMatch = descRegex.Match(descHtml);
+            if (descMatch != null)
+            {
+                desc = descMatch.Groups[detailsOption.DescRegex.GroupName].Value;
+            }
+
+            //描述中的图片
+            List<string> descImages = new List<string>();
+            Regex descImgRegex = new Regex(detailsOption.DescImageRegex.Pattern, RegexOptions.IgnoreCase);
+            MatchCollection descImgMatches = descImgRegex.Matches(desc);
+            foreach (Match m in descImgMatches)
+            {
+                string src = m.Groups[detailsOption.DescImageRegex.GroupName].Value.GetFullLink();
+
+                descImages.Add(src);
+            }
+            #endregion
+
+            //TODO 上传商品展示图
+
+            //TODO 上传商品描述图
+
+            //TODO 将描述中的图更换为上传后的地址
+
+            #region // 解析成产品库数据
+
+            //商品
+            Product product = new Product
+            {
+                BrandID = long.Parse(setup.ItemDO.BrandId),
+                CategoryID = searchRst.CategoryId,
+                CreateTime = DateTime.Now,
+                Intro = desc,
+                IsDelete = false,
+                mainPic = images.FirstOrDefault(),
+                Path = searchRst.Link,
+                Pics = string.Join(",", images),
+                ProductID = Tools.NewId(),
+                Properties = string.Empty,
+                Source = collectorType,
+                Title = setup.ItemDO.Title,
+                UpdateTime = DateTime.Now,
+                Weight = float.Parse(setup.ItemDO.Weight),
+                SourceProductID = long.Parse(setup.ItemDO.ItemId)
+            };
+
+            //SKU
+            ProductSku sku = new ProductSku
+            {
+                CreateTime = product.CreateTime,
+                IsDelete = false,
+                Name = product.Title,
+                ProductID = product.ProductID,
+                SalePrice = decimal.Parse(setup.Detail.DefaultItemPrice),
+                SkuID = Tools.NewId(),
+                UpdateTime = product.UpdateTime,
+                Weight = product.Weight
+            };
+
+            #endregion
+
+            #region // 保存到数据库
+
+            using (var db = new DataContext())
+            {
+                db.Product.Add(product);
+                db.ProductSku.Add(sku);
+
+                return db.SaveChanges() > 0;
+            }
+
+            #endregion
         }
 
         public void SaveCategoryCollectingRecord(CollectedCategory item)
@@ -250,12 +358,12 @@ namespace ProductCollector.TmallChaoShi
                     string searchHtml = WebClientHelper.GetContent(url, searchOption.Encoding, searchOption.CookieString);
 
                     //获取下一页链接
-                    Regex nextPageRegex = new Regex(searchOption.NextPagePattern, RegexOptions.IgnoreCase);
+                    Regex nextPageRegex = new Regex(searchOption.NextPageRegex.Pattern, RegexOptions.IgnoreCase);
 
                     //匹配下一页html
                     Match nextMatch = nextPageRegex.Match(searchHtml);
 
-                    nextLink = nextMatch.Groups[searchOption.NextPageLinkGroupName].Value;
+                    nextLink = nextMatch.Groups[searchOption.NextPageRegex.GroupName].Value;
 
                     if (nextLink.StartsWith("?"))
                     {
@@ -263,7 +371,7 @@ namespace ProductCollector.TmallChaoShi
                     }
 
                     //捕获当前页所有商品链接
-                    Regex productRegex = new Regex(searchOption.ProductItemPattern, RegexOptions.IgnoreCase);
+                    Regex productRegex = new Regex(searchOption.ItemRegex.Pattern, RegexOptions.IgnoreCase);
 
                     //匹配所有的商品区html
                     MatchCollection proMatchs = productRegex.Matches(searchHtml);
@@ -275,8 +383,8 @@ namespace ProductCollector.TmallChaoShi
                         {
                             SiteCatId = cat.SiteCatId,
                             CategoryId = cat.CategoryId,
-                            Name = Tools.IgnoreHtmlTag(m.Groups[searchOption.ProductTitleGroupName].Value),
-                            Link = m.Groups[searchOption.ProductItemLinkGroupName].Value
+                            Name = Tools.IgnoreHtmlTag(m.Groups[searchOption.ItemRegex.TitleGroupName].Value),
+                            Link = m.Groups[searchOption.ItemRegex.LinkGroupName].Value
                         });
                     }
 
@@ -353,13 +461,13 @@ namespace ProductCollector.TmallChaoShi
         {
             string firstDataString = WebClientHelper.GetContent(categoryOption.FirstCategoriesDataUrl, Encoding.UTF8);
 
-            Regex reg = new Regex(categoryOption.FirstCategoriesPattern, RegexOptions.IgnoreCase);
+            Regex reg = new Regex(categoryOption.FirstCategoriesRegex.Pattern, RegexOptions.IgnoreCase);
 
             Match m = reg.Match(firstDataString);
 
             if (m != null)
             {
-                string data = m.Groups[categoryOption.FirstCategoriesDataGroupName].Value;
+                string data = m.Groups[categoryOption.FirstCategoriesRegex.GroupName].Value;
 
                 return JsonConvert.DeserializeObject<FirstCategoryResult>(data);
             }
@@ -376,13 +484,13 @@ namespace ProductCollector.TmallChaoShi
         {
             string childDataString = WebClientHelper.GetContent(url, Encoding.UTF8);
 
-            Regex reg = new Regex(categoryOption.ChildCategoriesPattern, RegexOptions.IgnoreCase);
+            Regex reg = new Regex(categoryOption.ChildCategoriesRegex.Pattern, RegexOptions.IgnoreCase);
 
             Match m = reg.Match(childDataString);
 
             if (m != null)
             {
-                string data = m.Groups[categoryOption.ChildCategoriesDataGroupName].Value;
+                string data = m.Groups[categoryOption.ChildCategoriesRegex.GroupName].Value;
 
                 return JsonConvert.DeserializeObject<ChildCategoryResult>(data);
             }

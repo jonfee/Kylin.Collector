@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <root>
+  <protocols>https://</protocols>
   <category categoryIdQueryName="cat">
     <first>
       <url>https://www.tmall.com/wow/chaoshi/act/category?wh_logica=HN&amp;_ksTS=1476167157496_164&amp;wh_callback=__chaoshi_category</url>
@@ -20,11 +21,19 @@
       -->
       <productpattern titleGroup="title" linkGroup="href">&lt;(h3 class="product-title"|p class="productTitle")&gt;[^&lt;]*&lt;a href="(?&lt;href&gt;[^"]+)"[^&gt;]*&gt;(?&lt;title&gt;(?:(?!&lt;/a&gt;).|\n)+)&lt;/a&gt;[^&lt;]*&lt;/(h3|p)&gt;</productpattern>
     </search>
-    <details charset="gbk">
-      <pattern>
-        <!--<h1 data-spm="\d+">(?<title>(?:(?!</h1>).|\n)+)</h1>-->
-        <title group="title">&lt;h1 data-spm="\d+"&gt;(?&lt;title&gt;(?:(?!&lt;/h1&gt;).|\n)+)&lt;/h1&gt;</title>
-      </pattern>
-    </details>
   </category>
+  <details  charset="gbk">
+    <!--商品组装信息 正则：TShop.Setup\((?<setupinfo>(?:(?!\);).|\n)*)\);-->
+    <setuppattern group="setupinfo">TShop.Setup\((?&lt;setupinfo&gt;(?:(?!\);).|\n)*)\);</setuppattern>
+    <!--商品图片信息区 正则：<ul id="J_UlThumb" [^>]*>(?:(?!</ul>).|\n)*</ul>-->
+    <imagespattern group="images">&lt;ul id="J_UlThumb" [^&gt;]*&gt;(?&lt;images&gt;(?:(?!&lt;/ul&gt;).|\n)*)&lt;/ul&gt;</imagespattern>
+    <!--单个图片地址 正则：<img src="(?<src>[^"]*)" />-->
+    <singleimagepattern group="src">&lt;img src="(?&lt;src&gt;[^"]*)" /&gt;</singleimagepattern>
+    <!--图片原图移除地址 正则：_\d+x\d+q\d+\.[a-z]+-->
+    <imageurlremovepattern>_\d+x\d+q\d+\.[a-z]+</imageurlremovepattern>
+    <!--详情描述 正则：var desc='(?<desc>[^']*)';-->
+    <descpattern group="desc">var desc='(?&lt;desc&gt;[^']*)';</descpattern>
+    <!--详情描述中的图片 正则：(?:(?!src=).|\n)*src="(?<src>[^"]+)"-->
+    <descimgpattern group="src">(?:(?!src=).|\n)*src="(?&lt;src&gt;[^"]+)"</descimgpattern>
+  </details>
 </root>
