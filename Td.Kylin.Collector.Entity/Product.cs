@@ -80,11 +80,13 @@ namespace Td.Kylin.Collector.Entity
         /// <summary>
         /// 创建时间
         /// </summary>
+        [Column(TypeName = "datetime")]
         public DateTime CreateTime { get; set; }
 
         /// <summary>
         /// 最后更新时间
         /// </summary>
+        [Column(TypeName ="datetime")]
         public DateTime UpdateTime { get; set; }
     }
 }

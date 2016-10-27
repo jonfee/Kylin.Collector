@@ -19,7 +19,9 @@ namespace Td.Kylin.Collector.Entity
         public string Path { get; set; }
         public int Source { get; set; }
         public bool IsDelete { get; set; }
+        [Column(TypeName = "datetime")]
         public DateTime CreateTime { get; set; }
+        [Column(TypeName = "datetime")]
         public DateTime UpdateTime { get; set; }
     }
 }

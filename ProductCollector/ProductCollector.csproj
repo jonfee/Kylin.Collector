@@ -296,8 +296,8 @@
       <HintPath>..\packages\Td.AspNet.Utils.1.2.0\lib\net46\Td.AspNet.Utils.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Td.Kylin.Collector.Entity, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Td.Kylin.Collector.Entity.1.1.0\lib\net46\Td.Kylin.Collector.Entity.dll</HintPath>
+    <Reference Include="Td.Kylin.Collector.Entity, Version=1.2.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Td.Kylin.Collector.Entity.1.2.0\lib\net46\Td.Kylin.Collector.Entity.dll</HintPath>
       <Private>True</Private>
     </Reference>
   </ItemGroup>
