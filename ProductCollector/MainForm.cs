@@ -3,8 +3,10 @@ using ProductCollector.Core;
 using ProductCollector.Models;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,6 +16,7 @@ namespace ProductCollector
 {
     public partial class MainForm : Form
     {
+        #region /************************私有属性成员：锁对象、采集站数据源、当前采集服务、可采集的商品分类等*************************/
         /// <summary>
         /// 定义锁
         /// </summary>
@@ -75,6 +78,92 @@ namespace ProductCollector
             }
         }
 
+        #endregion
+
+        #region //////////////////程序通知、最小化到任务栏等////////////
+
+        //自定义NotifyIcon控件
+        private NotifyIcon notifyIcon = null;
+
+        /// <summary>
+        /// 窗体关闭事件
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void MainForm_FormClosing(object sender,FormClosingEventArgs e)
+        {
+            this.Hide();
+            e.Cancel = true;
+
+            if (null == notifyIcon)
+            {
+                InitiaTray();
+            }
+        }
+
+        /// <summary>
+        /// 初始化托盘
+        /// </summary>
+        private void InitiaTray()
+        {
+            notifyIcon = new NotifyIcon();
+            notifyIcon.BalloonTipText = $"{Application.ProductName}正在后台运行";
+            notifyIcon.Text = Application.ProductName;
+            string icon = AppDomain.CurrentDomain.BaseDirectory + ConfigurationManager.AppSettings["icon"];
+            if (File.Exists(icon))
+            {
+                notifyIcon.Icon = new System.Drawing.Icon(icon);
+            }
+            notifyIcon.Visible = true;
+            notifyIcon.ShowBalloonTip(1000);
+            notifyIcon.MouseClick += new MouseEventHandler(notifyIcon_MouseClick);
+
+            //退出菜单
+            MenuItem exit = new MenuItem("退出");
+            exit.Click += new EventHandler(exit_Click);
+
+            //关联托盘控件
+            MenuItem[] childen = new MenuItem[] { exit };
+            notifyIcon.ContextMenu = new ContextMenu(childen);
+        }
+
+        /// <summary>  
+        /// 鼠标单击  
+        /// </summary>  
+        /// <param name="sender"></param>  
+        /// <param name="e"></param>  
+        private void notifyIcon_MouseClick(object sender, System.Windows.Forms.MouseEventArgs e)
+        {
+            //鼠标左键单击  
+            if (e.Button == MouseButtons.Left)
+            {
+                //如果窗体是可见的，那么鼠标左击托盘区图标后，窗体为不可见  
+                if (this.Visible == true)
+                {
+                    this.Visible = false;
+                }
+                else
+                {
+                    this.Visible = true;
+                    this.Activate();
+                }
+            }
+        }
+
+        /// <summary>  
+        /// 退出选项  
+        /// </summary>  
+        /// <param name="sender"></param>  
+        /// <param name="e"></param>  
+        private void exit_Click(object sender, EventArgs e)
+        {
+            //退出程序  
+            Environment.Exit(0);
+        }
+
+        #endregion
+
+        #region /***********************窗体初始化及数据加载*****************************************/
         public MainForm()
         {
             InitializeComponent();
@@ -111,6 +200,10 @@ namespace ProductCollector
             //停止服务按钮不可用（初始化）
             this.btnStop.Enabled = false;
         }
+
+        #endregion
+
+        #region /*************************加载分类及采集服务启动、停止事件*******************/
 
         /// <summary>
         /// 采集站选择
@@ -229,6 +322,10 @@ namespace ProductCollector
             checkServiceStatus();
         }
 
+        #endregion
+
+        #region ////////////// 数据及状态检测//////////////////////
+
         /// <summary>
         /// 检验商品分类加载
         /// </summary>
@@ -280,15 +377,9 @@ namespace ProductCollector
             }
         }
 
-        /// <summary>
-        /// 重置进度条
-        /// </summary>
-        void resetProgressBar()
-        {
-            Writer.writeInvoke(new ProgressState { Max = 0, Value = 0 });
-        }
+        #endregion
 
-        #region 绑定商品分类到控件
+        #region /*****************绑定商品分类到控件*************************/
         /// <summary>
         /// 绑定商品分类到控件
         /// </summary>
@@ -463,7 +554,7 @@ namespace ProductCollector
 
         #endregion
 
-        #region 抓取服务回调方法
+        #region /********************抓取服务回调方法（消息输出、作业统计、作业进度、作业进度重置等）**************/
 
         /// <summary>
         /// 抓取服务回调方法
@@ -527,6 +618,14 @@ namespace ProductCollector
             this.rtxtMsg.AppendText(state.Text);
             this.rtxtMsg.AppendText("\n");
             this.rtxtMsg.Focus();
+        }
+
+        /// <summary>
+        /// 重置进度条
+        /// </summary>
+        void resetProgressBar()
+        {
+            Writer.writeInvoke(new ProgressState { Max = 0, Value = 0 });
         }
 
         #endregion

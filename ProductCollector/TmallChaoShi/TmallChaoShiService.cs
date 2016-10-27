@@ -166,11 +166,9 @@ namespace ProductCollector.TmallChaoShi
             int max = collectorQueue.Count();
             int collectedNum = 0;
 
-            int num = 0;
-
             Writer.writeInvoke(new ProgressState { Max = max, Value = collectedNum });
 
-            while (collectorQueue.Any() && num++ == 0)
+            while (collectorQueue.Any())
             {
                 var searchRst = collectorQueue.Any() ? collectorQueue.Dequeue() : null;
 
@@ -184,12 +182,14 @@ namespace ProductCollector.TmallChaoShi
                     {
                         Writer.writeInvoke(new MessageState { Text = $"“{searchRst.Name}”抓取失败！ " });
                     }
-
-                    Thread.Sleep(1000);
                 }
 
-                Writer.writeInvoke(new ProgressState { Max = max, Value = ++collectedNum });
+                collectedNum++;
+
+                Writer.writeInvoke(new ProgressState { Max = max, Value = collectedNum });
                 Writer.writeInvoke(new StatisticsState { TotalProducts = max, FinishProducts = collectedNum });
+
+                Thread.Sleep(1000);
             }
 
             Writer.writeInvoke(new MessageState { Text = $"所有商品抓取完成！" });
@@ -282,7 +282,7 @@ namespace ProductCollector.TmallChaoShi
             descImgDic = WebClientHelper.DownloadFile(descImgDic, uploadOption.VisitAddress, uploadOption.SaveDirectory);
 
             //将描述中的图更换为上传后的地址
-            foreach(var img in descImgDic)
+            foreach (var img in descImgDic)
             {
                 //将描述中的标识符替换为上传后的图片地址
                 desc = desc.Replace(img.Key, img.Value);

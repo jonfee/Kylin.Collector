@@ -354,6 +354,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="icon\collector.ico" />
     <Content Include="xml\collector.xml" />
     <Content Include="xml\tmallchaoshi.xml">
       <SubType>Designer</SubType>
@@ -373,7 +374,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy /e /s /k /v /i /y "$(ProjectDir)xml\*.*" "$(ProjectDir)$(OutDir)"</PostBuildEvent>
+    <PostBuildEvent>xcopy /e /s /k /v /i /y "$(ProjectDir)icon\*.*" "$(ProjectDir)$(OutDir)"
+xcopy /e /s /k /v /i /y "$(ProjectDir)xml\*.*" "$(ProjectDir)$(OutDir)"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
