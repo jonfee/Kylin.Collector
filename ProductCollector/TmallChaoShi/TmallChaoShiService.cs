@@ -170,17 +170,33 @@ namespace ProductCollector.TmallChaoShi
 
             while (collectorQueue.Any())
             {
+                if (collectedNum >= 26)
+                {
+                    var aa = "该调试啦";
+                }
+
                 var searchRst = collectorQueue.Any() ? collectorQueue.Dequeue() : null;
 
                 if (searchRst != null)
                 {
                     Writer.writeInvoke(new MessageState { Text = $"开始抓取“{searchRst.Name}”……" });
 
-                    bool success = getProduct(searchRst);
-
-                    if (!success)
+                    string err = null;
+                    try
                     {
-                        Writer.writeInvoke(new MessageState { Text = $"“{searchRst.Name}”抓取失败！ " });
+                        bool success = getProduct(searchRst);
+                        if (!success) err = $"“{searchRst.Name}”抓取失败！";
+                    }
+                    catch (Exception ex)
+                    {
+                        err = $"“{searchRst.Name}”抓取失败！原因：{ex.StackTrace} ";
+                    }
+                    finally
+                    {
+                        if (!string.IsNullOrWhiteSpace(err))
+                        {
+                            Writer.writeInvoke(new MessageState { Text = err });
+                        }
                     }
                 }
 

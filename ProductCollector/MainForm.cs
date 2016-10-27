@@ -90,7 +90,7 @@ namespace ProductCollector
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void MainForm_FormClosing(object sender,FormClosingEventArgs e)
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             this.Hide();
             e.Cancel = true;
@@ -249,7 +249,7 @@ namespace ProductCollector
             if (service != null)
             {
                 Writer.writeInvoke(new MessageState { Text = "从本地加载商品分类……" });
-                
+
                 Categories = service.GetLocationCategories();
 
                 bindCategory();
@@ -604,6 +604,11 @@ namespace ProductCollector
         }
 
         /// <summary>
+        /// 消息锁
+        /// </summary>
+        readonly object writeLocker = new object();
+
+        /// <summary>
         /// 输出消息
         /// </summary>
         /// <param name="state"></param>
@@ -615,9 +620,21 @@ namespace ProductCollector
             {
                 state.Text += DateTime.Now.ToString(" --yyyy-MM-dd HH:mm:ss");
             }
-            this.rtxtMsg.AppendText(state.Text);
-            this.rtxtMsg.AppendText("\n");
-            this.rtxtMsg.Focus();
+
+            lock (writeLocker)
+            {
+                int lines = this.rtxtMsg.Lines.Length;
+
+                if (lines > 50)
+                {
+                    var newLines = this.rtxtMsg.Lines.ToList();
+                    newLines.RemoveRange(0,lines - 50);
+                    this.rtxtMsg.Lines = newLines.ToArray();
+                }
+                this.rtxtMsg.AppendText(state.Text);
+                this.rtxtMsg.AppendText("\n");
+                this.rtxtMsg.Focus();
+            }
         }
 
         /// <summary>

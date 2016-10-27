@@ -151,7 +151,7 @@
             this.groupBox2.Controls.Add(this.rtxtMsg);
             this.groupBox2.Location = new System.Drawing.Point(13, 397);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(875, 241);
+            this.groupBox2.Size = new System.Drawing.Size(875, 334);
             this.groupBox2.TabIndex = 1;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "采集结果";
@@ -160,7 +160,7 @@
             // 
             this.rtxtMsg.Location = new System.Drawing.Point(7, 21);
             this.rtxtMsg.Name = "rtxtMsg";
-            this.rtxtMsg.Size = new System.Drawing.Size(862, 241);
+            this.rtxtMsg.Size = new System.Drawing.Size(862, 307);
             this.rtxtMsg.TabIndex = 0;
             this.rtxtMsg.Text = "";
             // 
@@ -175,17 +175,17 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(900, 650);
+            this.ClientSize = new System.Drawing.Size(900, 743);
             this.Controls.Add(this.progressBar);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
             this.Name = "MainForm";
             this.Text = "产品采集器";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.groupBox2.ResumeLayout(false);
             this.ResumeLayout(false);
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
 
         }
 

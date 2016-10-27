@@ -44,9 +44,9 @@ namespace ProductCollector.Core
         {
             if (string.IsNullOrWhiteSpace(str)) return str;
 
-            Regex tagRegex = new Regex(@"</?[^>]+>", RegexOptions.IgnoreCase);
+            Regex tagRegex = new Regex(@"</?[^>]+>|\r|\n", RegexOptions.IgnoreCase);
 
-            return tagRegex.Replace(str, "");
+            return tagRegex.Replace(str, "").Trim();
         }
     }
 }
