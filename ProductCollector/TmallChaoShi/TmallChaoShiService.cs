@@ -13,6 +13,7 @@ using ProductCollector.BackState;
 using System.Threading;
 using Td.Kylin.Collector.Entity;
 using System.Net;
+using System.Drawing;
 
 namespace ProductCollector.TmallChaoShi
 {
@@ -125,17 +126,17 @@ namespace ProductCollector.TmallChaoShi
             {
                 isRunning = true;
 
-                Writer.writeInvoke(new MessageState { Text = "天猫超市数据采集开始……", PadTime = true });
-                Writer.writeInvoke(new MessageState { Text = "数据正在分析……", PadTime = true });
+                Writer.writeInvoke(new MessageState { Text = "天猫超市数据采集开始……", PadTime = true, Color = Color.Green });
+                Writer.writeInvoke(new MessageState { Text = "数据正在分析……", PadTime = true, Color = Color.Green });
                 Thread.Sleep(1000);
                 //分析数据
                 DataAnalyzing();
                 //输出统计结果
                 Writer.writeInvoke(new StatisticsState { TotalProducts = collectorQueue.Count() });
-                Writer.writeInvoke(new MessageState { Text = $"分析完成，结果：共有{collectorQueue.Count()}条商品数据待抓取。", PadTime = true });
+                Writer.writeInvoke(new MessageState { Text = $"分析完成，结果：共有{collectorQueue.Count()}条商品数据待抓取。", PadTime = true, Color = Color.Green });
 
                 Thread.Sleep(1000);
-                Writer.writeInvoke(new MessageState { Text = "商品采集开始……", PadTime = true });
+                Writer.writeInvoke(new MessageState { Text = "商品采集开始……", PadTime = true, Color = Color.Green });
 
                 //采集线程
                 collectThread = new Thread(new ThreadStart(CollectorWork));
@@ -143,7 +144,7 @@ namespace ProductCollector.TmallChaoShi
             }
             else
             {
-                Writer.writeInvoke(new MessageState { Text = "没有可采集的分类！", PadTime = true });
+                Writer.writeInvoke(new MessageState { Text = "没有可采集的分类！", PadTime = true, Color = Color.Green });
             }
         }
 
@@ -154,7 +155,8 @@ namespace ProductCollector.TmallChaoShi
             Writer.writeInvoke(new MessageState
             {
                 Text = "天猫超市数据采集服务停止！",
-                PadTime = true
+                PadTime = true,
+                Color = Color.Red
             });
         }
 
@@ -170,11 +172,6 @@ namespace ProductCollector.TmallChaoShi
 
             while (collectorQueue.Any())
             {
-                if (collectedNum >= 26)
-                {
-                    var aa = "该调试啦";
-                }
-
                 var searchRst = collectorQueue.Any() ? collectorQueue.Dequeue() : null;
 
                 if (searchRst != null)
@@ -195,7 +192,7 @@ namespace ProductCollector.TmallChaoShi
                     {
                         if (!string.IsNullOrWhiteSpace(err))
                         {
-                            Writer.writeInvoke(new MessageState { Text = err });
+                            Writer.writeInvoke(new MessageState { Text = err, Color = Color.Red });
                         }
                     }
                 }
@@ -208,7 +205,7 @@ namespace ProductCollector.TmallChaoShi
                 Thread.Sleep(1000);
             }
 
-            Writer.writeInvoke(new MessageState { Text = $"所有商品抓取完成！" });
+            Writer.writeInvoke(new MessageState { Text = $"所有商品抓取完成！", Color = Color.Green });
         }
 
         /// <summary>

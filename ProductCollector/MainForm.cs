@@ -248,17 +248,17 @@ namespace ProductCollector
 
             if (service != null)
             {
-                Writer.writeInvoke(new MessageState { Text = "从本地加载商品分类……" });
+                Writer.writeInvoke(new MessageState { Text = "从本地加载商品分类……", Color = Color.Green });
 
                 Categories = service.GetLocationCategories();
 
                 bindCategory();
 
-                Writer.writeInvoke(new MessageState { Text = "加载完成！" });
+                Writer.writeInvoke(new MessageState { Text = "加载完成！", Color = Color.Green });
             }
             else
             {
-                Writer.writeInvoke(new MessageState { Text = "服务异常，无法从本地加载商品分类！" });
+                Writer.writeInvoke(new MessageState { Text = "服务异常，无法从本地加载商品分类！", Color = Color.Red });
             }
         }
 
@@ -273,17 +273,17 @@ namespace ProductCollector
 
             if (service != null)
             {
-                Writer.writeInvoke(new MessageState { Text = "从远程下载商品分类……" });
+                Writer.writeInvoke(new MessageState { Text = "从远程下载商品分类……", Color = Color.Green });
 
                 Categories = service.UpdateCategories();
 
                 bindCategory();
 
-                Writer.writeInvoke(new MessageState { Text = "下载完成！" });
+                Writer.writeInvoke(new MessageState { Text = "下载完成！", Color = Color.Green});
             }
             else
             {
-                Writer.writeInvoke(new MessageState { Text = "服务异常，无法从远程下载商品分类！" });
+                Writer.writeInvoke(new MessageState { Text = "服务异常，无法从远程下载商品分类！", Color = Color.Red });
             }
         }
 
@@ -628,11 +628,13 @@ namespace ProductCollector
                 if (lines > 50)
                 {
                     var newLines = this.rtxtMsg.Lines.ToList();
-                    newLines.RemoveRange(0,lines - 50);
+                    newLines.RemoveRange(0, lines - 50);
                     this.rtxtMsg.Lines = newLines.ToArray();
                 }
-                this.rtxtMsg.AppendText(state.Text);
                 this.rtxtMsg.AppendText("\n");
+                this.rtxtMsg.SelectionColor = state.Color;
+                this.rtxtMsg.AppendText(state.Text);
+                
                 this.rtxtMsg.Focus();
             }
         }

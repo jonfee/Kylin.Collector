@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -49,6 +50,24 @@ namespace ProductCollector.BackState
         /// 是否需要填充时间
         /// </summary>
         public bool PadTime { get; set; }
+
+        private Color _color;
+        /// <summary>
+        /// 文字颜色
+        /// </summary>
+        public Color Color
+        {
+            get
+            {
+                if (_color == null) _color = Color.Black;
+
+                return _color;
+            }
+            set
+            {
+                _color = value;
+            }
+        }
     }
 
     /// <summary>
@@ -75,7 +94,7 @@ namespace ProductCollector.BackState
     public class StatisticsState : CallBackState
     {
         public override StateType Type => StateType.Statistics;
-        
+
         /// <summary>
         /// 总商品数
         /// </summary>
