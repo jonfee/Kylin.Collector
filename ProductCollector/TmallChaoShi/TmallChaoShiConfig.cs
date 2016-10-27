@@ -215,7 +215,7 @@ namespace ProductCollector.TmallChaoShi
                 }
                 else if (name == "singleimagepattern")
                 {
-                    this.DetailsOption.SingleImageRegex = new TmallChaoShi.DefaultRegexPattern
+                    this.DetailsOption.SingleImageRegex = new DefaultRegexPattern
                     {
                         Pattern = e.Value,
                         GroupName = e.Attribute("group").Value
@@ -238,13 +238,47 @@ namespace ProductCollector.TmallChaoShi
                 }
                 else if (name == "descimgpattern")
                 {
-                    this.DetailsOption.DescImageRegex = new TmallChaoShi.DefaultRegexPattern
+                    this.DetailsOption.DescImageRegex = new DefaultRegexPattern
                     {
                         Pattern = e.Value,
                         GroupName = e.Attribute("group").Value
                     };
                 }
+                else if (name == "replace")
+                {
+                    this.DetailsOption.ReplaceItems = GetReplaceItems(e);
+                }
             }
+        }
+
+        /// <summary>
+        /// 获取替换的对象
+        /// </summary>
+        /// <param name="em"></param>
+        /// <returns></returns>
+        private ReplaceItem[] GetReplaceItems(XElement em)
+        {
+            List<ReplaceItem> list = new List<ReplaceItem>();
+
+            foreach (var e in em.Elements())
+            {
+                string name = e.Name.ToString().ToLower();
+
+                if (name == "option")
+                {
+                    var s = e.Attribute("text").Value;
+                    if (!string.IsNullOrWhiteSpace(s))
+                    {
+                        list.Add(new ReplaceItem
+                        {
+                            SourceText = s,
+                            ReplaceTo = e.Attribute("to").Value
+                        });
+                    }
+                }
+            }
+
+            return list.ToArray();
         }
 
         /// <summary>
@@ -401,6 +435,11 @@ namespace ProductCollector.TmallChaoShi
         /// 详情描述中的图片正则式
         /// </summary>
         public DefaultRegexPattern DescImageRegex { get; set; }
+
+        /// <summary>
+        /// 替换项
+        /// </summary>
+        public ReplaceItem[] ReplaceItems { get; set; }
     }
 
     /// <summary>
@@ -437,6 +476,16 @@ namespace ProductCollector.TmallChaoShi
         public string TitleGroupName { get; set; }
 
         public string LinkGroupName { get; set; }
+    }
+
+    /// <summary>
+    /// 替换类
+    /// </summary>
+    public class ReplaceItem
+    {
+        public string SourceText { get; set; }
+
+        public string ReplaceTo { get; set; }
     }
 
     #endregion

@@ -186,7 +186,7 @@ namespace ProductCollector.TmallChaoShi
                     }
                     catch (Exception ex)
                     {
-                        err = $"“{searchRst.Name}”抓取失败！原因：{ex.StackTrace} ";
+                        err = $"“{searchRst.Name}”抓取失败！原因：\n{ex.Message}\n{ex.StackTrace} ";
                     }
                     finally
                     {
@@ -220,6 +220,8 @@ namespace ProductCollector.TmallChaoShi
             #region//TODO 抓取商品数据
             var detailsHtml = WebClientHelper.GetContent(searchRst.Link, detailsOption.Encoding);
 
+            if (string.IsNullOrWhiteSpace(detailsHtml)) return false;
+
             //商品装载数据
             ProductSetupResult setup = null;
             Regex setupRegex = new Regex(detailsOption.SetupRegex.Pattern, RegexOptions.IgnoreCase);
@@ -229,6 +231,8 @@ namespace ProductCollector.TmallChaoShi
                 string setupData = setupMatch.Groups[detailsOption.SetupRegex.GroupName].Value;
                 setup = JsonConvert.DeserializeObject<ProductSetupResult>(setupData);
             }
+
+            if (setup == null || setup.ItemDO == null) return false;
 
             //定义商品ID
             long productId = Tools.NewId();
@@ -303,6 +307,17 @@ namespace ProductCollector.TmallChaoShi
 
             #region // 解析成产品库数据
 
+            string title = setup.ItemDO.Title;
+
+            if (detailsOption.ReplaceItems.Any())
+            {
+                foreach (var rep in detailsOption.ReplaceItems)
+                {
+                    title = title.Replace(rep.SourceText, rep.ReplaceTo);
+                    desc = desc.Replace(rep.SourceText, rep.ReplaceTo);
+                }
+            }
+
             //商品
             Product product = new Product
             {
@@ -317,7 +332,7 @@ namespace ProductCollector.TmallChaoShi
                 ProductID = productId,
                 Properties = string.Empty,
                 Source = collectorType,
-                Title = setup.ItemDO.Title,
+                Title = title,
                 UpdateTime = DateTime.Now,
                 Weight = float.Parse(setup.ItemDO.Weight),
                 SourceProductID = long.Parse(setup.ItemDO.ItemId)

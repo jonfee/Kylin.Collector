@@ -35,6 +35,10 @@
     <descpattern group="desc">var desc='(?&lt;desc&gt;[^']*)';</descpattern>
     <!--详情描述中的图片 正则：(?:(?!src=).|\n)*src="(?<src>[^"]+)"-->
     <descimgpattern group="src">(?:(?!src=).|\n)*src="(?&lt;src&gt;[^"]+)"</descimgpattern>
+    <!--文字替换-->
+    <replace>
+      <option text="天猫超市" to="全心直营" />
+    </replace>
   </details>
   <upload>
     <visitaddress>http://files.t.quanxinshenghuo.net</visitaddress>
