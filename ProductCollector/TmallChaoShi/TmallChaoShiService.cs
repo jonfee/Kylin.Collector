@@ -12,6 +12,7 @@ using ProductCollector.Data;
 using ProductCollector.BackState;
 using System.Threading;
 using Td.Kylin.Collector.Entity;
+using System.Net;
 
 namespace ProductCollector.TmallChaoShi
 {
@@ -25,6 +26,8 @@ namespace ProductCollector.TmallChaoShi
         CategoryOption categoryOption = TmallChaoShiConfig.Instance.CategoryOption;
 
         DetailsOption detailsOption = TmallChaoShiConfig.Instance.DetailsOption;
+
+        UploadOption uploadOption = TmallChaoShiConfig.Instance.UploadOption;
 
         /// <summary>
         /// 采集类型
@@ -214,8 +217,11 @@ namespace ProductCollector.TmallChaoShi
                 setup = JsonConvert.DeserializeObject<ProductSetupResult>(setupData);
             }
 
+            //定义商品ID
+            long productId = Tools.NewId();
+
             //图片
-            List<string> images = new List<string>();
+            Dictionary<string, string> proImgDic = new Dictionary<string, string>();//key为“商品ID_v序号”组成，value为采集的图片地址
             Regex imagesRegex = new Regex(detailsOption.ImagesDataRegex.Pattern, RegexOptions.IgnoreCase);
             Match imagesMatch = imagesRegex.Match(detailsHtml);
             if (imagesMatch != null)
@@ -228,13 +234,15 @@ namespace ProductCollector.TmallChaoShi
 
                 Regex removeRegex = new Regex(detailsOption.ImageSrcRemoveRegex.Pattern, RegexOptions.IgnoreCase);
 
+                int proIdx = 0;
                 foreach (Match m in singleImgMatches)
                 {
                     string src = m.Groups[detailsOption.SingleImageRegex.GroupName].Value.GetFullLink();
 
+                    //移除缩略图标识，保留原图地址
                     src = removeRegex.Replace(src, "");
 
-                    images.Add(src);
+                    proImgDic.Add($"{setup.ItemDO.ItemId}_v{++proIdx}", src);
                 }
             }
 
@@ -249,22 +257,36 @@ namespace ProductCollector.TmallChaoShi
             }
 
             //描述中的图片
-            List<string> descImages = new List<string>();
+            Dictionary<string, string> descImgDic = new Dictionary<string, string>();//key为“商品ID_d序号”组成，value为采集的图片地址
             Regex descImgRegex = new Regex(detailsOption.DescImageRegex.Pattern, RegexOptions.IgnoreCase);
             MatchCollection descImgMatches = descImgRegex.Matches(desc);
+            int descIdx = 0;
             foreach (Match m in descImgMatches)
             {
-                string src = m.Groups[detailsOption.DescImageRegex.GroupName].Value.GetFullLink();
+                string src = m.Groups[detailsOption.DescImageRegex.GroupName].Value;
 
-                descImages.Add(src);
+                //当前图片标识
+                string currentImgTag = $"{setup.ItemDO.ItemId}_d{++descIdx}";
+
+                //将详情描述中的当前图片地址用标识符替换以占位，待上传后用新地址替换
+                desc = desc.Replace(src, currentImgTag);
+
+                descImgDic.Add(currentImgTag, src.GetFullLink());
             }
             #endregion
 
-            //TODO 上传商品展示图
+            //下载商品展示图
+            proImgDic = WebClientHelper.DownloadFile(proImgDic, uploadOption.VisitAddress, uploadOption.SaveDirectory);
 
-            //TODO 上传商品描述图
+            //下载商品描述图
+            descImgDic = WebClientHelper.DownloadFile(descImgDic, uploadOption.VisitAddress, uploadOption.SaveDirectory);
 
-            //TODO 将描述中的图更换为上传后的地址
+            //将描述中的图更换为上传后的地址
+            foreach(var img in descImgDic)
+            {
+                //将描述中的标识符替换为上传后的图片地址
+                desc = desc.Replace(img.Key, img.Value);
+            }
 
             #region // 解析成产品库数据
 
@@ -276,10 +298,10 @@ namespace ProductCollector.TmallChaoShi
                 CreateTime = DateTime.Now,
                 Intro = desc,
                 IsDelete = false,
-                mainPic = images.FirstOrDefault(),
+                mainPic = proImgDic.Values.FirstOrDefault(),
                 Path = searchRst.Link,
-                Pics = string.Join(",", images),
-                ProductID = Tools.NewId(),
+                Pics = string.Join(",", proImgDic.Values),
+                ProductID = productId,
                 Properties = string.Empty,
                 Source = collectorType,
                 Title = setup.ItemDO.Title,

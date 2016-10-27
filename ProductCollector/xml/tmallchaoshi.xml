@@ -36,4 +36,8 @@
     <!--详情描述中的图片 正则：(?:(?!src=).|\n)*src="(?<src>[^"]+)"-->
     <descimgpattern group="src">(?:(?!src=).|\n)*src="(?&lt;src&gt;[^"]+)"</descimgpattern>
   </details>
+  <upload>
+    <visitaddress>http://files.t.quanxinshenghuo.net</visitaddress>
+    <savedirectory>D:\\collect\\prod\\tmcs</savedirectory>
+  </upload>
 </root>

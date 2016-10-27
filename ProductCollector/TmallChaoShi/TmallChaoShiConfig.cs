@@ -42,6 +42,8 @@ namespace ProductCollector.TmallChaoShi
 
             this.DetailsOption = new DetailsOption();
 
+            this.UploadOption = new UploadOption();
+
             //加载采集器配置信息xml文档
             string xmlPath = Path.Combine(AppContext.BaseDirectory, "tmallchaoshi.xml");
             var xml = XElement.Load(xmlPath);
@@ -59,6 +61,9 @@ namespace ProductCollector.TmallChaoShi
                         break;
                     case "details":
                         GetProductDetailsConfig(c);
+                        break;
+                    case "upload":
+                        GetUploadConfig(c);
                         break;
                 }
             }
@@ -242,6 +247,27 @@ namespace ProductCollector.TmallChaoShi
             }
         }
 
+        /// <summary>
+        /// 获取文件上传相关配置
+        /// </summary>
+        /// <param name="em"></param>
+        private void GetUploadConfig(XElement em)
+        {
+            foreach (var e in em.Elements())
+            {
+                string name = e.Name.ToString().ToLower();
+
+                if (name == "visitaddress")
+                {
+                    this.UploadOption.VisitAddress = e.Value;
+                }
+                else if (name == "savedirectory")
+                {
+                    this.UploadOption.SaveDirectory = e.Value;
+                }
+            }
+        }
+
         #region 配置项
 
         /// <summary>
@@ -263,6 +289,11 @@ namespace ProductCollector.TmallChaoShi
         /// 获取商品详情数据配置项
         /// </summary>
         public DetailsOption DetailsOption { get; set; }
+
+        /// <summary>
+        /// 文件上传配置项
+        /// </summary>
+        public UploadOption UploadOption { get; set; }
 
         #endregion
     }
@@ -373,13 +404,22 @@ namespace ProductCollector.TmallChaoShi
     }
 
     /// <summary>
+    /// 文件上传配置
+    /// </summary>
+    public class UploadOption
+    {
+        public string VisitAddress { get; set; }
+
+        public string SaveDirectory { get; set; }
+    }
+
+    /// <summary>
     /// 正则式基类
     /// </summary>
     public abstract class BaseRegexPattern
     {
         public string Pattern { get; set; }
     }
-
 
     /// <summary>
     /// 默认正则规则
